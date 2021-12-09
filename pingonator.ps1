@@ -3,7 +3,9 @@
     Pingonator
 .PARAMETER net
     network
-.PARAMETER sСЋ\
+.PARAMETER start
+    start
+.PARAMETER end
     start
 .EXAMPLE
     .\pings.ps1 -net 192.168.0 -start 1 -end 254
@@ -40,7 +42,7 @@ $pingout = $start..$end | ForEach-Object -ThrottleLimit ($end - $start + 1) -Par
     $status = "$($ip_counter.Value)/$using:range - $ip"
     Write-Progress -Activity $title -Status $status -PercentComplete (($ip_counter.Value / $using:range) * 100)    
     $cmd = Test-Connection $ip -Count 1 -IPv4  | Select-Object -ExpandProperty Address
-   # $cmd| Select-Object -ExpandProperty "IPAddressToString"
+    # $cmd| Select-Object -ExpandProperty "IPAddressToString"
     #$cmd.Destination
     #-ExpandProperty "Address"
     
@@ -54,7 +56,7 @@ $pingout = $start..$end | ForEach-Object -ThrottleLimit ($end - $start + 1) -Par
     return $ips
 } 
 
-Write-Host "`nTotal $($pingout.count) live IPs from $range [$start..$end]:"
+Write-Host "Total $($pingout.count) live IPs from $range [$start..$end]:"
 $list = $pingout | Sort-Object { $_ -as [Version] } | Out-String
 Write-Host $list -ForegroundColor Green
 #Read-Host -Prompt "Press any key to continue"
