@@ -37,20 +37,10 @@ $pingout = $start..$end | ForEach-Object -ThrottleLimit ($end - $start + 1) -Par
     $ip = $using:net + "." + $_
     $ip_counter = $using:counter
     $ip_counter.Value += 1
-    # Write-Host $ip_counter.Value
-    $title = "Ping"
     $status = "$($ip_counter.Value)/$using:range - $ip"
-    Write-Progress -Activity $title -Status $status -PercentComplete (($ip_counter.Value / $using:range) * 100)    
+    Write-Progress -Activity "Ping" -Status $status -PercentComplete (($ip_counter.Value / $using:range) * 100)    
     $cmd = Test-Connection $ip -Count 1 -IPv4  | Select-Object -ExpandProperty Address
-    # $cmd| Select-Object -ExpandProperty "IPAddressToString"
-    #$cmd.Destination
-    #-ExpandProperty "Address"
-    
-    if ($cmd -ne $ip) {
-        #    Write-Host $ip -ForegroundColor Red 
-    }
-    else { 
-        #    Write-Host $ip -ForegroundColor Green   
+    if ($cmd -eq $ip) {
         $ips += $ip
     }
     return $ips
