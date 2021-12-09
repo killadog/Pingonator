@@ -1,0 +1,60 @@
+<#
+.DESCRIPTION
+    Pingonator
+.PARAMETER net
+    network
+.PARAMETER sСЋ\
+    start
+.EXAMPLE
+    .\pings.ps1 -net 192.168.0 -start 1 -end 254
+    Ping network 192.168.0.0 in range 192.168.0.1-192.168.0.254
+.NOTES
+    Author: Rad
+    Date:   December 9, 2021    
+#>
+param (
+    [parameter(Mandatory = $false)]
+    [string]$net = "192.168.0",
+    
+    [parameter(Mandatory = $false)]
+    [ValidateRange(1, 254)]
+    [int] $start = 1,
+    
+    [parameter(Mandatory = $false)]
+    [ValidateRange(1, 254)]
+    [int] $end = 150
+)
+
+$live_ips = @()
+$range = $end - $start + 1
+$counter = [ref]0
+
+Write-Host "ICMP check IPs from $net.$start to $net.$end]:"
+$pingout = $start..$end | ForEach-Object -ThrottleLimit ($end - $start + 1) -Parallel {
+    $ips = $using:live_ips
+    $ip = $using:net + "." + $_
+    $ip_counter = $using:counter
+    $ip_counter.Value += 1
+    # Write-Host $ip_counter.Value
+    $title = "Ping"
+    $status = "$($ip_counter.Value)/$using:range - $ip"
+    Write-Progress -Activity $title -Status $status -PercentComplete (($ip_counter.Value / $using:range) * 100)    
+    $cmd = Test-Connection $ip -Count 1 -IPv4  | Select-Object -ExpandProperty Address
+   # $cmd| Select-Object -ExpandProperty "IPAddressToString"
+    #$cmd.Destination
+    #-ExpandProperty "Address"
+    
+    if ($cmd -ne $ip) {
+        #    Write-Host $ip -ForegroundColor Red 
+    }
+    else { 
+        #    Write-Host $ip -ForegroundColor Green   
+        $ips += $ip
+    }
+    return $ips
+} 
+
+Write-Host "`nTotal $($pingout.count) live IPs from $range [$start..$end]:"
+$list = $pingout | Sort-Object { $_ -as [Version] } | Out-String
+Write-Host $list -ForegroundColor Green
+#Read-Host -Prompt "Press any key to continue"
