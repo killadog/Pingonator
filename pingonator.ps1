@@ -36,7 +36,7 @@ $pingout = $start..$end | ForEach-Object -ThrottleLimit ($end - $start + 1) -Par
     $ips = $using:live_ips
     $ip = $using:net + "." + $_
     $ip_counter = $using:counter
-    $ip_counter.Value += 1
+    $ip_counter.Value++
     $status = "$($ip_counter.Value)/$using:range - $ip"
     Write-Progress -Activity "Ping" -Status $status -PercentComplete (($ip_counter.Value / $using:range) * 100)    
     $cmd = Test-Connection $ip -Count 1 -IPv4  | Select-Object -ExpandProperty Address
