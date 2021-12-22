@@ -40,7 +40,7 @@ $pingout = $start..$end | ForEach-Object -ThrottleLimit ($end - $start + 1) -Par
     $status = "$($ip_counter.Value)/$using:range - $ip"
     Write-Progress -Activity "Ping" -Status $status -PercentComplete (($ip_counter.Value / $using:range) * 100)    
     $cmd = Test-Connection $ip -Count 1 -IPv4  | Select-Object -ExpandProperty Address
-    if ($cmd -eq $ip) {
+    if ($cmd) {
         $ips += $ip
     }
     return $ips
@@ -49,4 +49,3 @@ $pingout = $start..$end | ForEach-Object -ThrottleLimit ($end - $start + 1) -Par
 Write-Host "Total $($pingout.count) live IPs from $range [$start..$end]:"
 $list = $pingout | Sort-Object { $_ -as [Version] } | Out-String
 Write-Host $list -ForegroundColor Green
-#Read-Host -Prompt "Press any key to continue"
