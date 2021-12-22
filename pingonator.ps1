@@ -16,7 +16,7 @@
 #>
 param (
     [parameter(Mandatory = $false)]
-    [string]$net = "192.168.0",
+    [string]$net = "192.168.13",
     
     [parameter(Mandatory = $false)]
     [ValidateRange(1, 254)]
@@ -24,7 +24,7 @@ param (
     
     [parameter(Mandatory = $false)]
     [ValidateRange(1, 254)]
-    [int] $end = 150
+    [int] $end = 254
 )
 
 $live_ips = @()
