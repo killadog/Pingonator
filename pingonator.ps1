@@ -1,14 +1,8 @@
 <#
 .DESCRIPTION
     Pingonator
-.PARAMETER net
-    network
-.PARAMETER start
-    start
-.PARAMETER end
-    start
 .EXAMPLE
-    .\pings.ps1 -net 192.168.0 -start 1 -end 254
+    .\pingonator.ps1 -net 192.168.0 -start 1 -end 254
     Ping network 192.168.0.0 in range 192.168.0.1-192.168.0.254
 .NOTES
     Author: Rad
