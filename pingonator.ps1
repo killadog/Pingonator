@@ -26,13 +26,17 @@ param (
     [ValidateRange(1, 4)]
     [int] $count = 1
 )
+if ($start -gt $end) {
+    Write-Error "-start cannot be greater than -end";
+    exit;
+}
 
 $live_ips = @()
 $range = $end - $start + 1
 $counter = [ref]0
-
+    
 Write-Host "ICMP check IPs from $net.$start to $net.$end"
-$pingout = $start..$end | ForEach-Object -ThrottleLimit ($end - $start + 1) -Parallel {
+$pingout = $start..$end | ForEach-Object -ThrottleLimit $range -Parallel {
     $ips = $using:live_ips
     $ip = $using:net + "." + $_
     $ip_counter += $using:counter
@@ -47,6 +51,8 @@ $pingout = $start..$end | ForEach-Object -ThrottleLimit ($end - $start + 1) -Par
     }
     return $ips
 } 
-
+    
 Write-Host "Total $($pingout.count) live IPs from $range [$start..$end]:"
 $pingout | Select-Object ip, name, mac | Sort-Object { $_.IP -as [Version] }
+    
+
