@@ -16,11 +16,11 @@ param (
     
     [parameter(Mandatory = $false)]
     [ValidateRange(1, 254)]
-    [int] $start = 10,
+    [int] $start = 1,
     
     [parameter(Mandatory = $false)]
     [ValidateRange(1, 254)]
-    [int] $end = 22
+    [int] $end = 254
 )
 
 $live_ips = @()
