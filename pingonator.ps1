@@ -2,8 +2,8 @@
 .DESCRIPTION
     Pingonator
 .EXAMPLE
-    .\pingonator.ps1 -net 192.168.0 -start 1 -end 254
     Ping network 192.168.0.0 in range 192.168.0.1-192.168.0.254
+    .\pingonator.ps1 -net 192.168.0 -start 1 -end 254
 .NOTES
     Author: Rad
     Date:   December 9, 2021    
