@@ -31,7 +31,7 @@ $live_ips = @()
 $range = $end - $start + 1
 $counter = [ref]0
 
-Write-Host "ICMP check IPs from $net.$start to $net.$end]:"
+Write-Host "ICMP check IPs from $net.$start to $net.$end"
 $pingout = $start..$end | ForEach-Object -ThrottleLimit ($end - $start + 1) -Parallel {
     $ips = $using:live_ips
     $ip = $using:net + "." + $_
