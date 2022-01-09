@@ -33,13 +33,21 @@ $pingout = $start..$end | ForEach-Object -ThrottleLimit ($end - $start + 1) -Par
     $ip_counter.Value++
     $status = "$($ip_counter.Value)/$using:range - $ip"
     Write-Progress -Activity "Ping" -Status $status -PercentComplete (($ip_counter.Value / $using:range) * 100)    
-    $cmd = Test-Connection $ip -Count 1 -IPv4  | Select-Object -ExpandProperty Address
-    if ($cmd) {
-        $ips += $ip
+    $ping = Test-Connection $ip -Count 1 -IPv4  | Select-Object -ExpandProperty Address
+    if ($ping) {
+        <# $ips += $ip
+        $ips += $MAC #>
+        $MAC = (arp -a $ip | Select-String '([0-9a-f]{2}-){5}[0-9a-f]{2}').Matches.Value
+        $Name = Test-Connection $ip -Count 1 -IPv4 -ResolveDestination | Select-Object -ExpandProperty Destination
+       <#  $Name = [System.Net.Dns]::GetHostByAddress($ip).Hostname #>
+        $ips = New-Object PSObject -property @{IP = $ip; MAC = $MAC; Name = $Name }
     }
     return $ips
 } 
 
+<# Write-Host "Total $($pingout.count) live IPs from $range [$start..$end]:" #>
 Write-Host "Total $($pingout.count) live IPs from $range [$start..$end]:"
-$list = $pingout | Sort-Object { $_ -as [Version] } | Out-String
-Write-Host $list -ForegroundColor Green
+<# $list = $pingout | Sort-Object { $_ -as [Version] } | Out-String #>
+<# $list = $pingout | Sort-Object -Property ip #>
+<# Write-Host $list -ForegroundColor Green #>
+$pingout | Select-Object ip, name, mac | Sort-Object -Property ip
