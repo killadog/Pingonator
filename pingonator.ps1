@@ -12,7 +12,7 @@
 #>
 param (
     [parameter(Mandatory = $false)]
-    [string]$net = "192.168.13",
+    [string]$net = "192.168.0",
     
     [parameter(Mandatory = $false)]
     [ValidateRange(1, 254)]
@@ -20,7 +20,11 @@ param (
     
     [parameter(Mandatory = $false)]
     [ValidateRange(1, 254)]
-    [int] $end = 254
+    [int] $end = 254,
+
+    [parameter(Mandatory = $false)]
+    [ValidateRange(1, 4)]
+    [int] $count = 1
 )
 
 $live_ips = @()
@@ -35,7 +39,7 @@ $pingout = $start..$end | ForEach-Object -ThrottleLimit ($end - $start + 1) -Par
     $ip_counter.Value++
     $status = "$($ip_counter.Value)/$using:range - $ip"
     Write-Progress -Activity "Ping" -Status $status -PercentComplete (($ip_counter.Value / $using:range) * 100)    
-    $ping = Test-Connection $ip -Count 1 -IPv4  | Select-Object -ExpandProperty Address
+    $ping = Test-Connection $ip -Count $using:count -IPv4  | Select-Object -ExpandProperty Address
     if ($ping) {
         $MAC = (arp -a $ip | Select-String '([0-9a-f]{2}-){5}[0-9a-f]{2}').Matches.Value
         $Name = Test-Connection $ip -Count 1 -IPv4 -ResolveDestination | Select-Object -ExpandProperty Destination
