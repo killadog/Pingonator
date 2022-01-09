@@ -13,6 +13,7 @@ Parallel ping
 |-count|Число отправляемых запросов проверки связи [1..4]|1|
 
 Примеры:
+
 `.\pingonator.ps1 -net 10.10.0 -start 20 -end 140 -count 2`
 
 `.\pingonator.ps1 -net 10.10.0 -start 20 -end 140`
