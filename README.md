@@ -14,7 +14,11 @@ Parallel ping
 
 Примеры:
 `.\pingonator.ps1 -net 10.10.0 -start 20 -end 140 -count 2`
+
 `.\pingonator.ps1 -net 10.10.0 -start 20 -end 140`
+
 `.\pingonator.ps1 -net 10.10.0 -start 20`
+
 `.\pingonator.ps1 -net 10.10.0`
+
 `.\pingonator.ps1`
