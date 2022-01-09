@@ -4,6 +4,8 @@
 .EXAMPLE
     Ping network 192.168.0.0 in range 192.168.0.1-192.168.0.254
     .\pingonator.ps1 -net 192.168.0 -start 1 -end 254
+    or
+    .\pingonator.ps1 -net 192.168.0
 .NOTES
     Author: Rad
     Date:   December 9, 2021    
@@ -14,11 +16,11 @@ param (
     
     [parameter(Mandatory = $false)]
     [ValidateRange(1, 254)]
-    [int] $start = 1,
+    [int] $start = 10,
     
     [parameter(Mandatory = $false)]
     [ValidateRange(1, 254)]
-    [int] $end = 254
+    [int] $end = 22
 )
 
 $live_ips = @()
@@ -35,19 +37,12 @@ $pingout = $start..$end | ForEach-Object -ThrottleLimit ($end - $start + 1) -Par
     Write-Progress -Activity "Ping" -Status $status -PercentComplete (($ip_counter.Value / $using:range) * 100)    
     $ping = Test-Connection $ip -Count 1 -IPv4  | Select-Object -ExpandProperty Address
     if ($ping) {
-        <# $ips += $ip
-        $ips += $MAC #>
         $MAC = (arp -a $ip | Select-String '([0-9a-f]{2}-){5}[0-9a-f]{2}').Matches.Value
         $Name = Test-Connection $ip -Count 1 -IPv4 -ResolveDestination | Select-Object -ExpandProperty Destination
-       <#  $Name = [System.Net.Dns]::GetHostByAddress($ip).Hostname #>
         $ips = New-Object PSObject -property @{IP = $ip; MAC = $MAC; Name = $Name }
     }
     return $ips
 } 
 
-<# Write-Host "Total $($pingout.count) live IPs from $range [$start..$end]:" #>
 Write-Host "Total $($pingout.count) live IPs from $range [$start..$end]:"
-<# $list = $pingout | Sort-Object { $_ -as [Version] } | Out-String #>
-<# $list = $pingout | Sort-Object -Property ip #>
-<# Write-Host $list -ForegroundColor Green #>
 $pingout | Select-Object ip, name, mac | Sort-Object -Property ip
