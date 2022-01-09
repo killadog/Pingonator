@@ -45,4 +45,4 @@ $pingout = $start..$end | ForEach-Object -ThrottleLimit ($end - $start + 1) -Par
 } 
 
 Write-Host "Total $($pingout.count) live IPs from $range [$start..$end]:"
-$pingout | Select-Object ip, name, mac | Sort-Object -Property ip
+$pingout | Select-Object ip, name, mac | Sort-Object { $_.IP -as [Version] }
