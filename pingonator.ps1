@@ -31,7 +31,7 @@ Write-Host "ICMP check IPs from $net.$start to $net.$end]:"
 $pingout = $start..$end | ForEach-Object -ThrottleLimit ($end - $start + 1) -Parallel {
     $ips = $using:live_ips
     $ip = $using:net + "." + $_
-    $ip_counter = $using:counter
+    $ip_counter += $using:counter
     $ip_counter.Value++
     $status = "$($ip_counter.Value)/$using:range - $ip"
     Write-Progress -Activity "Ping" -Status $status -PercentComplete (($ip_counter.Value / $using:range) * 100)    
