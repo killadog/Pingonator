@@ -35,24 +35,34 @@ $live_ips = @()
 $range = $end - $start + 1
 $counter = [ref]0
     
-Write-Host "ICMP check IPs from $net.$start to $net.$end"
-$pingout = $start..$end | ForEach-Object -ThrottleLimit $range -Parallel {
-    $ips = $using:live_ips
-    $ip = $using:net + "." + $_
-    $ip_counter += $using:counter
-    $ip_counter.Value++
-    $status = "$($ip_counter.Value)/$using:range - $ip"
-    Write-Progress -Activity "Ping" -Status $status -PercentComplete (($ip_counter.Value / $using:range) * 100)    
-    $ping = Test-Connection $ip -Count $using:count -IPv4  | Select-Object -ExpandProperty Address
-    if ($ping) {
-        $MAC = (arp -a $ip | Select-String '([0-9a-f]{2}-){5}[0-9a-f]{2}').Matches.Value
-        $Name = Test-Connection $ip -Count 1 -IPv4 -ResolveDestination | Select-Object -ExpandProperty Destination
-        $ips = New-Object PSObject -property @{IP = $ip; MAC = $MAC; Name = $Name }
+Write-Host "ICMP check IPs from $net.$start to $net.$end" -ForegroundColor Black -BackgroundColor Yellow
+$ping_time = Measure-Command {
+    $pingout = $start..$end | ForEach-Object -ThrottleLimit $range -Parallel {
+        $ips = $using:live_ips
+        $ip = $using:net + "." + $_
+        $ip_counter += $using:counter
+        $ip_counter.Value++
+        $status = "$($ip_counter.Value)/$using:range - $ip"
+        Write-Progress -Activity "Ping" -Status $status -PercentComplete (($ip_counter.Value / $using:range) * 100)    
+        $ping = Test-Connection $ip -Count $using:count -IPv4  | Select-Object -ExpandProperty Address
+        if ($ping) {
+            $MAC = (arp -a $ip | Select-String '([0-9a-f]{2}-){5}[0-9a-f]{2}').Matches.Value
+            try {
+                $Name = Test-Connection $ip -Count 1 -IPv4 -ResolveDestination | Select-Object -ExpandProperty Destination
+            }
+            catch {
+                $Name = $null
+            }
+            $ips = New-Object PSObject -property @{IP = $ip; MAC = $MAC; Name = $Name }
+        }
+        return $ips
     }
-    return $ips
-} 
-    
-Write-Host "Total $($pingout.count) live IPs from $range [$start..$end]:"
-$pingout | Select-Object ip, name, mac | Sort-Object { $_.IP -as [Version] }
-    
+    Write-Host "Total $($pingout.count) live IPs from $range [$start..$end]"
+    $pingout | Select-Object IP, Name, MAC | Sort-Object { $_.IP -as [Version] } | Out-Default
+}
+
+$ping_time = $ping_time -join ""
+$ping_time = $ping_time.SubString(0, 8)
+Write-Host "Total ping time $ping_time"    
+
 
