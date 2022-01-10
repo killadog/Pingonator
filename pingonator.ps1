@@ -3,7 +3,7 @@
     Pingonator
 .EXAMPLE
     Ping network 192.168.0.0 in range 192.168.0.1-192.168.0.254
-    .\pingonator.ps1 -net 192.168.0 -start 1 -end 254
+    .\pingonator.ps1 -net 192.168.0 -start 1 -end 254 -count 2 -resolve 1
     or
     .\pingonator.ps1 -net 192.168.0
 .NOTES
@@ -24,8 +24,17 @@ param (
 
     [parameter(Mandatory = $false)]
     [ValidateRange(1, 4)]
-    [int] $count = 1
+    [int] $count = 1,
+
+    [parameter(Mandatory = $false)]
+    [ValidateRange(0, 1)]
+    [int] $resolve = 1
 )
+if ($net -notmatch '^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$)){3}$') {
+    Write-Error "Not valid IP address! Syntax: 192.168.0"
+    exit;
+}
+
 if ($start -gt $end) {
     Write-Error "-start cannot be greater than -end";
     exit;
@@ -35,23 +44,25 @@ $live_ips = @()
 $range = $end - $start + 1
 $counter = [ref]0
     
-Write-Host "ICMP check IPs from $net.$start to $net.$end" -ForegroundColor Black -BackgroundColor Yellow
+Write-Host "ICMP check IPs from $net.$start to $net.$end"
 $ping_time = Measure-Command {
     $pingout = $start..$end | ForEach-Object -ThrottleLimit $range -Parallel {
         $ips = $using:live_ips
         $ip = $using:net + "." + $_
-        $ip_counter += $using:counter
+        $ip_counter = $using:counter
         $ip_counter.Value++
         $status = "$($ip_counter.Value)/$using:range - $ip"
         Write-Progress -Activity "Ping" -Status $status -PercentComplete (($ip_counter.Value / $using:range) * 100)    
         $ping = Test-Connection $ip -Count $using:count -IPv4  | Select-Object -ExpandProperty Address
         if ($ping) {
             $MAC = (arp -a $ip | Select-String '([0-9a-f]{2}-){5}[0-9a-f]{2}').Matches.Value
-            try {
-                $Name = Test-Connection $ip -Count 1 -IPv4 -ResolveDestination | Select-Object -ExpandProperty Destination
-            }
-            catch {
-                $Name = $null
+            if ($using:resolve) {            
+                try {
+                    $Name = Test-Connection $ip -Count 1 -IPv4 -ResolveDestination | Select-Object -ExpandProperty Destination
+                }
+                catch {
+                    $Name = $null
+                }
             }
             $ips = New-Object PSObject -property @{IP = $ip; MAC = $MAC; Name = $Name }
         }
@@ -63,6 +74,9 @@ $ping_time = Measure-Command {
 
 $ping_time = $ping_time -join ""
 $ping_time = $ping_time.SubString(0, 8)
-Write-Host "Total ping time $ping_time"    
+Write-Host "Total ping time $ping_time"
+
+<# Write-Host 'Press any key to continue...';
+$null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown'); #>
 
 
