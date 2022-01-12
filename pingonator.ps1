@@ -18,7 +18,7 @@ param (
     [ValidateRange(1, 254)]
     [int] $start = 1,
     
-    [parameter(Mandatory = $false)]
+    
     [ValidateRange(1, 254)]
     [int] $end = 254,
 
@@ -27,9 +27,16 @@ param (
     [int] $count = 1,
 
     [parameter(Mandatory = $false)]
+    [ValidateRange(0, 1)] 
+    [int] $resolve = 1,
+
+    [parameter(Mandatory = $false)]
     [ValidateRange(0, 1)]
-    [int] $resolve = 1
+    [int] $mac = 1
 )
+
+#Requires -Version 7.0
+
 if ($net -notmatch '^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$)){3}$') {
     Write-Error "Not valid IP address! Syntax: 192.168.0"
     exit;
@@ -55,21 +62,29 @@ $ping_time = Measure-Command {
         Write-Progress -Activity "Ping" -Status $status -PercentComplete (($ip_counter.Value / $using:range) * 100)    
         $ping = Test-Connection $ip -Count $using:count -IPv4  | Select-Object -ExpandProperty Address
         if ($ping) {
-            $MAC = (arp -a $ip | Select-String '([0-9a-f]{2}-){5}[0-9a-f]{2}').Matches.Value
+            if ($using:mac -eq 1) {
+                $get_MAC = (arp -a $ip | Select-String '([0-9a-f]{2}-){5}[0-9a-f]{2}').Matches.Value
+            }
             if ($using:resolve) {            
                 try {
-                    $Name = Test-Connection $ip -Count 1 -IPv4 -ResolveDestination | Select-Object -ExpandProperty Destination
+                    <# $Name = Test-Connection $ip -Count 1 -IPv4 -ResolveDestination | Select-Object -ExpandProperty Destination #>
+                    $Name = Resolve-DnsName -Name $ip -DnsOnly -ErrorAction Stop | Select-Object -ExpandProperty NameHost
                 }
                 catch {
                     $Name = $null
                 }
             }
-            $ips = New-Object PSObject -property @{IP = $ip; MAC = $MAC; Name = $Name }
+            $ips = New-Object PSObject -property @{IP = $ip; MAC = $get_MAC; Name = $Name }
         }
         return $ips
     }
     Write-Host "Total $($pingout.count) live IPs from $range [$start..$end]"
-    $pingout | Select-Object IP, Name, MAC | Sort-Object { $_.IP -as [Version] } | Out-Default
+    <# $pingout |  Sort-Object { $_.IP -as [Version] } | Out-Default #>
+    $pingout | foreach-object { 
+        Write-Host "$($_.IP) " -NoNewline -ForegroundColor Green
+        Write-Host "$($_.Name) " -NoNewline -ForegroundColor Yellow
+        Write-Host $_.MAC -ForegroundColor White
+    } | Format-List
 }
 
 $ping_time = $ping_time -join ""

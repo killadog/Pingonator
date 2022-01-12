@@ -12,10 +12,11 @@ Parallel ping
 |-end|Конец диапазона сканирования [1..254]|254|
 |-count|Число отправляемых запросов проверки связи [1..4]|1|
 |-resolve|Разрешение имён [0..1]|1|
+|-resolve|Разрешение MAC адреса [0..1]|1|
 
 Примеры:
 
-`.\pingonator.ps1 -net 10.10.0 -start 20 -end 140 -count 2 -resolve 1`
+`.\pingonator.ps1 -net 10.10.0 -start 20 -end 140 -count 2 -resolve 1 -mac 1`
 
 `.\pingonator.ps1 -net 10.10.0 -start 20`
 
