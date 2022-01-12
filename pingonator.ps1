@@ -81,9 +81,13 @@ $ping_time = Measure-Command {
     Write-Host "Total $($pingout.count) live IPs from $range [$start..$end]"
     <# $pingout |  Sort-Object { $_.IP -as [Version] } | Out-Default #>
     $pingout | foreach-object { 
-        Write-Host "$($_.IP) " -NoNewline -ForegroundColor Green
-        Write-Host "$($_.Name) " -NoNewline -ForegroundColor Yellow
-        Write-Host $_.MAC -ForegroundColor White
+        write-host $_.IP.trim().PadRight(16, ' ') -NoNewline -ForegroundColor Green
+        <# Write-Host "$($_.IP) " -NoNewline -ForegroundColor Green #>
+        if ($_.Name) { write-host $_.Name.trim().PadRight(27, ' ') -NoNewline -ForegroundColor Yellow }
+        <# Write-Host "$($_.Name) " -NoNewline -ForegroundColor Yellow #>
+        if ($_.MAC) { write-host $_.MAC.trim().PadRight(90, ' ') -NoNewline }
+        Write-Host "`r"
+        <# Write-Host $_.MAC -ForegroundColor White #>
     } | Format-List
 }
 
