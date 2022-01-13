@@ -3,7 +3,7 @@
     Pingonator
 .EXAMPLE
     Ping network 192.168.0.0 in range 192.168.0.1-192.168.0.254
-    .\pingonator.ps1 -net 192.168.0 -start 1 -end 254 -count 2 -resolve 1
+    .\pingonator.ps1 -net 192.168.0 -start 1 -end 254 -count 1 -resolve 1 -mac 1 -latency 1
     or
     .\pingonator.ps1 -net 192.168.0
 .NOTES
@@ -51,11 +51,20 @@ if ($start -gt $end) {
     exit;
 }
 
+function ColorValue {
+    param (     
+        [Parameter(Mandatory = $False)][string]$Column_Name,
+        [Parameter(Mandatory = $False)][string]$color
+    )
+    $e = [char]27
+    "$e[${color}m$($Column_Name)${e}[0m"
+}
+
 $live_ips = @()
 $range = $end - $start + 1
 [ref]$counter = 0
     
-Write-Host "ICMP check IPs from $net.$start to $net.$end"
+Write-Host "ICMP check $range IPs from $net.$start to $net.$end"
 $ping_time = Measure-Command {
     $pingout = $start..$end | ForEach-Object -ThrottleLimit $range -Parallel {
         $ip_list = $using:live_ips
@@ -75,49 +84,31 @@ $ping_time = Measure-Command {
                 }
             }
             if ($using:mac -eq 1) {
-                $get_MAC = (arp -a $ip | Select-String '([0-9a-f]{2}-){5}[0-9a-f]{2}').Matches.Value
+                $MAC = (arp -a $ip | Select-String '([0-9a-f]{2}-){5}[0-9a-f]{2}').Matches.Value
+                if ($MAC) {
+                    $MAC = $MAC.ToUpper()
+                }
             }
             if ($using:latency -eq 1) {
                 $ms = $ping.Latency
             }
-            $ip_list = New-Object PSObject -property @{IP = $ip; Name = $Name; MAC = $get_MAC; Latency = $ms }
+            $ip_list += [PSCustomObject] @{
+                'IP address' = $ip
+                'Name'       = $Name
+                'MAC'        = $MAC
+                'Latency'    = $ms
+            }
         }
         return $ip_list
-    }
-
-    <# [array]$a= $pingout | foreach-object {    
-        [PSCustomObject]@{
-            'IP'         = $_.IP
-            'IP Address' = $_.Name
-            'Scope Name' = $_.MAC
-            'Comment'    = $_.Latency
-        }
-    }
-  #>
- 
-    Write-Host "Total $($pingout.count) live IPs from $range [$start..$end]"
-    $pingout |  Sort-Object { $_.IP -as [Version] } | foreach-object {    
-
-        write-host $_.IP.PadRight(16, ' ') -NoNewline -ForegroundColor Green
-        if ($_.Name) {
-            write-host $_.Name.PadRight(27, ' ') -NoNewline -ForegroundColor Yellow 
-        }
-        else {
-            write-host " ".PadRight(27, ' ') -NoNewline
-        }
-        if ($_.MAC) {
-            write-host $_.MAC.PadRight(22, ' ').ToUpper() -NoNewline 
-        }
-        else {
-            write-host " ".PadRight(22, ' ') -NoNewline
-        }
-        if ($_.Latency) {
-            Write-Host $_.Latency -NoNewline -ForegroundColor Yellow 
-        }      
-        Write-Host "`r"
-    } | Format-Table | Out-String
+    } 
+    
+    $live_ips = $pingout.count
+    $pingout | Sort-Object -Property 'IP address' | Format-Table -AutoSize -Wrap -Property @{name = "IP address"; Expression = { ColorValue $_.'IP address' 32 } },
+    @{name = "Name"; Expression = { ColorValue $_.Name 33 } },
+    @{name = "MAC address"; Expression = { ColorValue $_.MAC 37 } },
+    @{name = "Latency (ms)"; Expression = { if ($_.Latency -gt 100) { ColorValue $_.Latency 31 } else { ColorValue $_.Latency 32 } } } | Out-Default
 }
-
+Write-Host "Total $live_ips live IPs from $range [$net.$start..$net.$end]"
 $ping_time = $ping_time.ToString().SubString(0, 8)
 Write-Host "Total ping time $ping_time"
 
