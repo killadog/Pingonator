@@ -18,7 +18,6 @@ param (
     [ValidateRange(1, 254)]
     [int] $start = 1,
     
-    
     [ValidateRange(1, 254)]
     [int] $end = 254,
 
@@ -106,9 +105,12 @@ $ping_time = Measure-Command {
     $pingout | Sort-Object { $_.'IP Address' -as [Version] } | Format-Table -AutoSize -Wrap -Property @{name = "IP address"; Expression = { ColorValue $_.'IP address' 32 } },
     @{name = "Name"; Expression = { ColorValue $_.Name 33 } },
     @{name = "MAC address"; Expression = { ColorValue $_.MAC 37 } },
-    @{name = "Latency (ms)"; Expression = { if ($_.Latency -gt 100) { ColorValue $_.Latency 31 } else { ColorValue $_.Latency 32 } } } | Out-Default
+    @{name = "Latency (ms)"; Expression = { if ($_.Latency -gt 100) { ColorValue $_.Latency 31 } else { ColorValue $_.Latency 32 } }; align = 'center' } | Out-Default
 }
-Write-Host "Total $live_ips live IPs from $range [$net.$start..$net.$end]"
+Write-Host "Total " -NoNewline
+Write-Host " $live_ips " -NoNewline -ForegroundColor Black -BackgroundColor Gray
+Write-Host " live IPs from $range [$net.$start..$net.$end]"
+
 $ping_time = $ping_time.ToString().SubString(0, 8)
 Write-Host "Total ping time $ping_time"
 
