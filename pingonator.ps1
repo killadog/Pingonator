@@ -103,7 +103,7 @@ $ping_time = Measure-Command {
     } 
     
     $live_ips = $pingout.count
-    $pingout | Sort-Object -Property 'IP address' | Format-Table -AutoSize -Wrap -Property @{name = "IP address"; Expression = { ColorValue $_.'IP address' 32 } },
+    $pingout | Sort-Object { [system.version[]]($_.'IP Address') } | Format-Table -AutoSize -Wrap -Property @{name = "IP address"; Expression = { ColorValue $_.'IP address' 32 } },
     @{name = "Name"; Expression = { ColorValue $_.Name 33 } },
     @{name = "MAC address"; Expression = { ColorValue $_.MAC 37 } },
     @{name = "Latency (ms)"; Expression = { if ($_.Latency -gt 100) { ColorValue $_.Latency 31 } else { ColorValue $_.Latency 32 } } } | Out-Default
