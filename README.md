@@ -3,7 +3,7 @@
 
 Parallel ping
 
-`.\pingonator.ps1 [-net <сеть>] [-start <число>] [-end <число>] [-count <число>] [-resolve <0|1>]`
+`.\pingonator.ps1 [-net <сеть>] [-start <число>] [-end <число>] [-count <число>] [-resolve <0|1>] [-mac <0|1>] [-latency <0|1>]`
 
 |Параметр|Описание|По умолчанию|
 |---|---|---|
@@ -13,10 +13,11 @@ Parallel ping
 |-count|Число отправляемых запросов проверки связи [1..4]|1|
 |-resolve|Разрешение имён [0..1]|1|
 |-mac|Разрешение MAC адреса [0..1]|1|
+|-latency|Отклик в мс [0..1]|1|
 
 Примеры:
 
-`.\pingonator.ps1 -net 10.10.0 -start 20 -end 140 -count 2 -resolve 1 -mac 1`
+`.\pingonator.ps1 -net 10.10.0 -start 20 -end 140 -count 2 -resolve 1 -mac 1 -latency 1`
 
 `.\pingonator.ps1 -net 10.10.0 -start 20`
 
