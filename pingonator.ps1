@@ -76,14 +76,32 @@ foreach ($p in $ports) {
     }
 }
 
+#$exclude_list = @()
 #$exclude = $exclude -replace (' ', '')
 foreach ($e in $exclude) {
-    if ($e -notmatch '^(25[0-5]|(2[0-4]|1\d|[1-9]|)\d)$') {
-        Write-Error "Not valid ip in exclude! Syntax: 1,23,254"
+    #$e = $e -replace (' ', '')
+    #Write-Host $e
+    if (($e -match '^(25[0-5]|(2[0-4]|1\d|[1-9]|)\d)$') -or ($e -match '^(25[0-5]|(2[0-4]|1\d|[1-9]|)\d)-(25[0-5]|(2[0-4]|1\d|[1-9]|)\d)$')) {
+        if ($e -like "*-*") {
+            $splitter = $e.split("-")
+            $splitter_array = $splitter[0]..$splitter[1]
+            
+            $exclude_list += $splitter_array 
+        }
+        else {
+            $exclude_list += $e    
+        }
+    } 
+    else {
+        Write-Error "Not valid ip in exclude! Syntax: 1,23,248-254"
         exit;    
     }
 }
 
+Write-Host $exclude_list
+#$exclude_list = $exclude_list | Select-Object -Unique
+Write-Host $exclude_list
+#exit
 function ColorValue {
     param (     
         [Parameter(Mandatory = $False)][string]$Column_Name,
@@ -102,7 +120,7 @@ Write-Host "Starting at $now"
 Write-Host "ICMP check $range IPs from $net.$start to $net.$end"
 $ping_time = Measure-Command {
     $pingout = $start..$end | ForEach-Object -ThrottleLimit $range -Parallel {
-        if (!($_ -in $($using:exclude))) {
+        if (!($_ -in $($using:exclude_list))) {
             $ip_list = $using:live_ips
             $ip = $using:net + "." + $_
             $($using:counter).Value++
@@ -154,7 +172,7 @@ $ping_time = Measure-Command {
 
     $pingout = $pingout | Sort-Object { $_.'IP Address' -as [Version] } 
     
-    $pingout | Format-Table -AutoSize -Wrap -Property @{name = "IP address"; Expression = { ColorValue $_.'IP address' 92 } },
+    $pingout | Format-Table -Property @{name = "IP address"; Expression = { ColorValue $_.'IP address' 92 } },
     @{name = "Name"; Expression = { ColorValue $_.Name 93 } },
     @{name = "MAC address"; Expression = { ColorValue $_.'MAC address' 97 } },
     @{name = "Latency (ms)"; Expression = { if ($_.'Latency (ms)' -gt 100) { ColorValue $_.Latency 91 } else { ColorValue $_.'Latency (ms)' 93 } }; align = 'center' },
