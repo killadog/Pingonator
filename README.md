@@ -1,6 +1,8 @@
 # Pingonator
 ![Powershell >= 7.0](https://img.shields.io/badge/Powershell-%3E=7.0-blue.svg)
 
+![2022-01-14 213024](https://user-images.githubusercontent.com/47281323/149566817-fff15bd9-02ed-487e-b66b-02682a1f5150.png)
+
 Parallel ping
 
 `.\pingonator.ps1 [-net <сеть>] [-start <число>] [-end <число>] [-count <число>] [-resolve <0|1>] [-mac <0|1>] [-latency <0|1>] [-grid <0|1>] [-file <0|1>] [-port <список портов>] [-exclude <список IP>]`
