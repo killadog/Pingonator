@@ -8,7 +8,8 @@
     .\pingonator.ps1 -net 192.168.0
 .NOTES
     Author: Rad
-    Date:   December 9, 2021    
+    Date: December 9, 2021
+    URL: https://github.com/killadog/Pingonator
 #>
 param (
     [parameter(Mandatory = $false)]
