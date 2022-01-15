@@ -27,31 +27,25 @@ param (
     [int] $count = 1,
 
     [parameter(Mandatory = $false)]
-    [ValidateRange(0, 1)] 
-    [int] $resolve = 1,
+    [switch] $resolve,
 
     [parameter(Mandatory = $false)]
-    [ValidateRange(0, 1)]
-    [int] $mac = 1,
+    [switch] $mac,
 
     [parameter(Mandatory = $false)]
-    [ValidateRange(0, 1)]
-    [int] $latency = 1,
+    [switch] $latency,
     
     [parameter(Mandatory = $false)]
-    [ValidateRange(0, 1)]
-    [int] $grid = 0,
+    [switch] $grid,
     
     [parameter(Mandatory = $false)]
-    [ValidateRange(0, 1)]
-    [int] $file = 0,
+    [switch] $file,
 
     [parameter(Mandatory = $false)]
     [string[]] $ports = 0,
 
     [parameter(Mandatory = $false)]
     [string[]] $exclude = 0
-
 )
 
 #Requires -Version 7.0
@@ -69,28 +63,26 @@ if ($start -gt $end) {
 }
 
 $ports_list = @()
-#$ports = $ports -replace (' ', '')
-foreach ($p in $ports) {
-    if ($p -match '(^([1-9]|[1-5]?[0-9]{2,4}|6[1-4][0-9]{3}|65[1-4][0-9]{2}|655[1-2][0-9]|6553[1-5])$)|(^([1-9]|[1-5]?[0-9]{2,4}|6[1-4][0-9]{3}|65[1-4][0-9]{2}|655[1-2][0-9]|6553[1-5])-([1-9]|[1-5]?[0-9]{2,4}|6[1-4][0-9]{3}|65[1-4][0-9]{2}|655[1-2][0-9]|6553[1-5])$)|((?<=,|^)([1-9]|[1-5]?[0-9]{2,4}|6[1-4][0-9]{3}|65[1-4][0-9]{2}|655[1-2][0-9]|6553[1-5])(?=,|$),?)|((?<=,|^)([1-9]|[1-5]?[0-9]{2,4}|6[1-4][0-9]{3}|65[1-4][0-9]{2}|655[1-2][0-9]|6553[1-5])-([1-9]|[1-5]?[0-9]{2,4}|6[1-4][0-9]{3}|65[1-4][0-9]{2}|655[1-2][0-9]|6553[1-5])(?=,|$),?)') {
-        <# if (($p -match '^(6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[1-9][0-9]{1,3}|[0-9])$') -or #>
-        <# ($p -match '^(6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[1-9][0-9]{0,3})-(?1)|(?1)(,(?1))+$')) { #>
-        <# ($p -match '^(6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[1-9][0-9]{1,3}|[0-9])-(6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[1-9][0-9]{1,3}|[0-9])$')) { #>
-    
-        if ($p -like "*-*") {
-            $splitter = $p.split("-")
-            $splitter_array = $splitter[0]..$splitter[1]
-            $ports_list += $splitter_array 
+if ($ports -ne 0) {
+    #$ports = $ports -replace (' ', '')
+    foreach ($p in $ports) {
+        if ($p -match '(^([1-9]|[1-5]?[0-9]{2,4}|6[1-4][0-9]{3}|65[1-4][0-9]{2}|655[1-2][0-9]|6553[1-5])$)|(^([1-9]|[1-5]?[0-9]{2,4}|6[1-4][0-9]{3}|65[1-4][0-9]{2}|655[1-2][0-9]|6553[1-5])-([1-9]|[1-5]?[0-9]{2,4}|6[1-4][0-9]{3}|65[1-4][0-9]{2}|655[1-2][0-9]|6553[1-5])$)|((?<=,|^)([1-9]|[1-5]?[0-9]{2,4}|6[1-4][0-9]{3}|65[1-4][0-9]{2}|655[1-2][0-9]|6553[1-5])(?=,|$),?)|((?<=,|^)([1-9]|[1-5]?[0-9]{2,4}|6[1-4][0-9]{3}|65[1-4][0-9]{2}|655[1-2][0-9]|6553[1-5])-([1-9]|[1-5]?[0-9]{2,4}|6[1-4][0-9]{3}|65[1-4][0-9]{2}|655[1-2][0-9]|6553[1-5])(?=,|$),?)') {
+            if ($p -like "*-*") {
+                $splitter = $p.split("-")
+                $splitter_array = $splitter[0]..$splitter[1]
+                $ports_list += $splitter_array 
+            }
+            else {
+                $ports_list += $p
+            }
         }
         else {
-            $ports_list += $p
+            Write-Error "Not valid ports! Only [1..65535]. Syntax: 25,80,135,1096-2048"
+            exit;    
         }
     }
-    else {
-        Write-Error "Not valid ports! Only [1..65535]. Syntax: 25,80,135,1096-2048"
-        exit;    
-    }
+    $ports_list = $ports_list | Select-Object -Unique
 }
-$ports_list = $ports_list | Select-Object -Unique
 
 $exclude_list = @()
 foreach ($e in $exclude) {
@@ -111,6 +103,7 @@ foreach ($e in $exclude) {
     }
 }
 $exclude_list = $exclude_list | Select-Object -Unique
+
 function ColorValue {
     param (     
         [Parameter(Mandatory = $False)][string]$Column_Name,
@@ -121,12 +114,12 @@ function ColorValue {
 }
 
 $live_ips = @()
-$range = $end - $start + 1 - $($exclude_list.Name).Count
+$range = $end - $start + 1 - $exclude_list.Name.count
 [ref]$counter = 0
 $now = Get-Date -UFormat "%Y/%m/%d-%H:%M:%S"
 Write-Host "Starting at $now"
 
-Write-Host "ICMP check $range IPs from $net.$start to $net.$end"
+Write-Host "Checking $range IPs from $net.$start to $net.$end"
 $ping_time = Measure-Command {
     $pingout = $start..$end | ForEach-Object -ThrottleLimit $range -Parallel {
         if (!($_ -in $($using:exclude_list))) {
@@ -137,7 +130,7 @@ $ping_time = Measure-Command {
             Write-Progress -Activity "Ping" -Status $status -PercentComplete (($($using:counter).Value / $using:range) * 100)
             $ping = Test-Connection $ip -Count $using:count -IPv4 
             if ($ping.Status -eq "Success") {
-                if ($using:resolve) {            
+                if (!$using:resolve) {            
                     try {
                         $Name = Test-Connection $ip -Count 1 -IPv4 -ResolveDestination | Select-Object -ExpandProperty Destination
                         <# $Name = Resolve-DnsName -Name $ip -DnsOnly -ErrorAction Stop | Select-Object -ExpandProperty NameHost #>
@@ -146,13 +139,13 @@ $ping_time = Measure-Command {
                         $Name = $null
                     }
                 }
-                if ($using:mac -eq 1) {
+                if (!$using:mac) {
                     $MAC = (arp -a $ip | Select-String '([0-9a-f]{2}-){5}[0-9a-f]{2}').Matches.Value
                     if ($MAC) {
                         $MAC = $MAC.ToUpper()
                     }
                 }
-                if ($using:latency -eq 1) {
+                if (!$using:latency) {
                     $ms = $ping.Latency
                 }
 
@@ -188,14 +181,15 @@ $ping_time = Measure-Command {
     @{name = "Open Ports"; Expression = { ColorValue $_.'Open ports' 92 }; align = 'center' } | Out-Default
 }
 
-if ($grid -eq 1) {
+if ($grid) {
     $pingout | Out-GridView -Title "[$now] $live_ips live IPs from $range [$net.$start..$net.$end]"
 }
 
-if ($file -eq 1) {
+if ($file) {
     $file_name = Get-Date -UFormat "%Y%m%d-%H%M%S"
     $delimetr = (Get-Culture).TextInfo.ListSeparator
-    $pingout | Export-CSv -path .\$file_name.csv -NoTypeInformation -Delimiter $delimetr
+    $pingout | Export-Csv -path .\$file_name.csv -NoTypeInformation -Delimiter $delimetr
+    Write-Host "CSV file saved in $($PSStyle.Foreground.Yellow)$PSScriptRoot\$file_name.csv$($PSStyle.Reset)"
 }
 
 Write-Host "Total $($PSStyle.Background.White)$($PSStyle.Foreground.Black) $live_ips $($PSStyle.Reset) live IPs from $range [$net.$start..$net.$end]"
