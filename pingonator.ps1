@@ -1,6 +1,6 @@
 <#
 .DESCRIPTION
-    Pingonator
+    Parallel network check
 .EXAMPLE
     Ping network 192.168.0.0 in range 192.168.0.1-192.168.0.254
     .\pingonator.ps1 -net 192.168.0 -start 1 -end 254 -count 1 -resolve 1 -mac 1 -latency 1 -grid 1 -ports 20-23,25,80 -exclude 3,4,9-12
@@ -17,7 +17,7 @@ param (
     
     [parameter(Mandatory = $false)]
     [ValidateRange(1, 254)]
-    [int] $start = 1,
+    [int] $begin = 1,
     
     [parameter(Mandatory = $false)]
     [ValidateRange(1, 254)]
@@ -58,11 +58,6 @@ if ($net -notmatch '^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$)){3}$') {
     exit;
 }
 
-if ($start -gt $end) {
-    Write-Error "-start cannot be greater than -end";
-    exit;
-}
-
 $ports_list = @()
 if ($ports -ne 0) {
     #$ports = $ports -replace (' ', '')
@@ -99,7 +94,7 @@ foreach ($e in $exclude) {
         }
     } 
     else {
-        Write-Error "Not valid ip in exclude! Only [0..255]. Syntax: 1,23,248-254"
+        Write-Error "Not valid ip in -exclude! Only [0..255]. Syntax: 1,23,248-254"
         exit;    
     }
 }
@@ -115,14 +110,15 @@ function ColorValue {
 }
 
 $live_ips = @()
-$range = $end - $start + 1 - $exclude_list.Name.count
+$range = [Math]::Abs($end - $begin) + 1 - $exclude_list.Name.count
 [ref]$counter = 0
 $now = Get-Date -UFormat "%Y/%m/%d-%H:%M:%S"
-Write-Host "Starting at $now"
 
-Write-Host "Checking $range IPs from $net.$start to $net.$end"
+Write-Host "Starting at $now"
+Write-Host "Checking $range IPs from $net.$begin to $net.$end"
+
 $ping_time = Measure-Command {
-    $pingout = $start..$end | ForEach-Object -ThrottleLimit $range -Parallel {
+    $pingout = $begin..$end | ForEach-Object -ThrottleLimit $range -Parallel {
         if (!($_ -in $($using:exclude_list))) {
             $ip_list = $using:live_ips
             $ip = $using:net + "." + $_
@@ -172,28 +168,50 @@ $ping_time = Measure-Command {
     } 
     
     $live_ips = $($pingout.'IP address').count
-
-    $pingout = $pingout | Sort-Object { $_.'IP Address' -as [Version] } 
     
-    $pingout | Format-Table -Property @{name = "IP address"; Expression = { ColorValue $_.'IP address' 92 } },
-    @{name = "Name"; Expression = { ColorValue $_.Name 93 } },
-    @{name = "MAC address"; Expression = { ColorValue $_.'MAC address' 97 } },
-    @{name = "Latency (ms)"; Expression = { if ($_.'Latency (ms)' -gt 100) { ColorValue $_.'Latency (ms)' 91 } else { ColorValue $_.'Latency (ms)' 93 } }; align = 'center' },
-    @{name = "Open Ports"; Expression = { ColorValue $_.'Open ports' 92 }; align = 'center' } | Out-Default
+    $prop_ip = @{name = 'IP address'; Expression = { ColorValue $_.'IP address' 92 } } 
+    $prop_name = @{name = 'Name'; Expression = { ColorValue $_.Name 93 } }
+    $prop_mac = @{name = 'MAC address'; Expression = { ColorValue $_.'MAC address' 97 } }
+    $prop_latency = @{name = 'Latency (ms)'; Expression = { if ($_.'Latency (ms)' -gt 100) { ColorValue $_.'Latency (ms)' 91 } else { ColorValue $_.'Latency (ms)' 93 } }; align = 'center' }
+    $prop_ports = @{name = 'Open Ports'; Expression = { ColorValue $_.'Open ports' 92 }; align = 'center' }
+
+    <# $prop_ip = @{name = 'IP address'; Expression = { $($PSStyle.Foreground.BrightGreen) + $_.'IP address' } }
+    $prop_name = @{name = 'Name'; Expression = { $($PSStyle.Foreground.BrightYellow) + $_.Name } }
+    $prop_mac = @{name = 'MAC address'; Expression = { ColorValue $_.'MAC address' 97 } }
+    $prop_latency = @{name = 'Latency (ms)'; Expression = { if ($_.'Latency (ms)' -gt 100) { ColorValue $_.'Latency (ms)' 91 } else { ColorValue $_.'Latency (ms)' 93 } }; align = 'center' }
+    $prop_ports = @{name = 'Open Ports'; Expression = { ColorValue $_.'Open ports' 92 }; align = 'center' }
+ #>
+    [collections.arraylist]$Properties = @()
+    $Properties += $prop_ip
+    if (!$resolve) {
+        $Properties += $prop_name
+    }
+    if (!$mac) {
+        $Properties += $prop_mac
+    }
+    if (!$latency) {
+        $Properties += $prop_latency
+    }
+    if ($ports -ne 0) {
+        $Properties += $prop_ports
+    }
+    $PSStyle.Formatting.TableHeader = $PSStyle.Foreground.BrightWhite + $PSStyle.Bold
+    $pingout = $pingout | Sort-Object { $_.'IP Address' -as [Version] } 
+    $pingout | Format-Table  -Property $Properties | Out-Default
 }
 
 if ($grid) {
-    $pingout | Out-GridView -Title "[$now] $live_ips live IPs from $range [$net.$start..$net.$end]"
+    $pingout | Out-GridView -Title "[$now] $live_ips live IPs from $range [$net.$begin..$net.$end]" 
 }
 
 if ($file) {
     $file_name = Get-Date -UFormat "%Y%m%d-%H%M%S"
-    $delimetr = (Get-Culture).TextInfo.ListSeparator
-    $pingout | Export-Csv -path .\$file_name.csv -NoTypeInformation -Delimiter $delimetr
+    $delimeter = (Get-Culture).TextInfo.ListSeparator
+    $pingout | Export-Csv -path .\$file_name.csv -NoTypeInformation -Delimiter $delimeter
     Write-Host "CSV file saved in $($PSStyle.Foreground.Yellow)$PSScriptRoot\$file_name.csv$($PSStyle.Reset)"
 }
 
-Write-Host "Total $($PSStyle.Background.White)$($PSStyle.Foreground.Black) $live_ips $($PSStyle.Reset) live IPs from $range [$net.$start..$net.$end]"
+Write-Host "Total $($PSStyle.Background.White)$($PSStyle.Foreground.Black) $live_ips $($PSStyle.Reset) live IPs from $range [$net.$begin..$net.$end]"
 $ping_time = $ping_time.ToString().SubString(0, 8)
 Write-Host "Total ping time $ping_time"
 
