@@ -9,7 +9,7 @@
 ![2022-01-14 213024](https://user-images.githubusercontent.com/47281323/149566817-fff15bd9-02ed-487e-b66b-02682a1f5150.png)
 
 
-###System requirements
+### System requirements
 - Powershell 7.0 for parallelizing work
 - Powershell 7.2 for ANSI escape sequences
 - [xterm](https://en.wikipedia.org/wiki/Xterm)-based terminal
@@ -31,7 +31,7 @@
 |**-ports**|Detect open ports (comma or dash delimited) [0..65535,0..65535,0..65535-0..65535]||
 |**-exclude**|Exlude hosts from check (comma or dash delimited) [0..255,0..255,0..255-0..255]||
 
-###Examples
+### Examples
 
 `.\pingonator.ps1 -net 10.10.0 -begin 20 -end 140 -count 2 -resolve -mac -latency -grid -file -ports 20-23,25,80 -exclude 1,23,41-49`
 
