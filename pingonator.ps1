@@ -148,7 +148,8 @@ $ping_time = Measure-Command {
     } 
     
     $live_ips = $($pingout.'IP address').count
-    
+   
+    $prop_number = @{name = 'Number'; Expression = { '{0}' -f $_ } }
     $prop_ip = @{name = 'IP address'; Expression = { $($PSStyle.Foreground.BrightGreen) + $_.'IP address' } }
     $prop_name = @{name = 'Name'; Expression = { $($PSStyle.Foreground.BrightYellow) + $_.Name } }
     $prop_mac = @{name = 'MAC address'; Expression = { $($PSStyle.Foreground.BrightWhite) + $_.'MAC address' } }
@@ -157,6 +158,7 @@ $ping_time = Measure-Command {
  
     <# [collections.arraylist]$Properties = @() #>
     $Properties = @()
+    $Properties += $prop_number
     $Properties += $prop_ip
     if (!$resolve) {
         $Properties += $prop_name
@@ -187,7 +189,7 @@ if ($file) {
 
 Write-Host "Total $($PSStyle.Background.White)$($PSStyle.Foreground.Black) $live_ips $($PSStyle.Reset) live IPs from $range [$net.$begin..$net.$end]"
 $ping_time = $ping_time.ToString().SubString(0, 8)
-Write-Host "Total ping time $ping_time"
+Write-Host "Elapsed time $ping_time"
 
 <# Write-Host 'Press any key to continue...';
 $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown'); #>
