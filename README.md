@@ -10,12 +10,14 @@
 
 
 ### System requirements
+#### Minimum
 - Powershell 7.0 for parallelizing work
+#### Recommended
 - Powershell 7.2 for ANSI escape sequences
 - [xterm](https://en.wikipedia.org/wiki/Xterm)-based terminal
 ### Pingonator command syntax
 
->**.\pingonator.ps1** [**-net** *network*] [**-begin** *count*] [**-end** *count*] [**-count** *count*] [**-resolve**] [**-mac**] [**-latency**] [**-grid**] [**-file**] [**-ports** *ports*] [**-exclude** *ips*]
+>**.\pingonator.ps1** [**-net** *network*] [**-begin** *count*] [**-end** *count*] [**-count** *count*] [**-resolve**] [**-mac**] [**-latency**] [**-grid**] [**-file**] [**-ports** *ports*] [**-exclude** *ips*] [**-color**] 
 
 |Options|Explanation|Default value|
 |---|---|:---:|
@@ -30,10 +32,11 @@
 |**-file**|Export to CSV file|False|
 |**-ports**|Detect open ports (comma or dash delimited) [0..65535,0..65535,0..65535-0..65535]||
 |**-exclude**|Exlude hosts from check (comma or dash delimited) [0..255,0..255,0..255-0..255]||
+|**-color**|Color off|False|
 
 ### Examples
 
-`.\pingonator.ps1 -net 10.10.0 -begin 20 -end 140 -count 2 -resolve -mac -latency -grid -file -ports 20-23,25,80 -exclude 1,23,41-49`
+`.\pingonator.ps1 -net 10.10.0 -begin 20 -end 140 -count 2 -resolve -mac -latency -grid -file -ports 20-23,25,80 -exclude 1,23,41-49 -color`
 
 `.\pingonator.ps1 -net 10.10.0 -begin 20`
 

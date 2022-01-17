@@ -3,7 +3,7 @@
     Parallel network check
 .EXAMPLE
     Ping network 192.168.0.0 in range 192.168.0.1-192.168.0.254
-    .\pingonator.ps1 -net 192.168.0 -start 1 -end 254 -count 1 -resolve 1 -mac 1 -latency 1 -grid 1 -ports 20-23,25,80 -exclude 3,4,9-12
+    .\pingonator.ps1 -net 192.168.0 -start 1 -end 254 -count 1 -resolve 1 -mac 1 -latency 1 -grid 1 -ports 20-23,25,80 -exclude 3,4,9-12 -color
     or
     .\pingonator.ps1 -net 192.168.0
 .NOTES
@@ -12,48 +12,35 @@
     URL: https://github.com/killadog/Pingonator
 #>
 param (
-    [parameter(Mandatory = $false)]
-    [string]$net = "192.168.0",
-    
-    [parameter(Mandatory = $false)]
-    [ValidateRange(1, 254)]
-    [int] $begin = 1,
-    
-    [parameter(Mandatory = $false)]
-    [ValidateRange(1, 254)]
-    [int] $end = 254,
-
-    [parameter(Mandatory = $false)]
-    [ValidateRange(1, 4)]
-    [int] $count = 1,
-
-    [parameter(Mandatory = $false)]
-    [switch] $resolve,
-
-    [parameter(Mandatory = $false)]
-    [switch] $mac,
-
-    [parameter(Mandatory = $false)]
-    [switch] $latency,
-    
-    [parameter(Mandatory = $false)]
-    [switch] $grid,
-    
-    [parameter(Mandatory = $false)]
-    [switch] $file,
-
-    [parameter(Mandatory = $false)]
-    [string[]] $ports = 0,
-
-    [parameter(Mandatory = $false)]
-    [string[]] $exclude = 0
+    [parameter(Mandatory = $false)][string]$net = "192.168.0",
+    [parameter(Mandatory = $false)][ValidateRange(1, 254)][int] $begin = 1,
+    [parameter(Mandatory = $false)][ValidateRange(1, 254)][int] $end = 254,
+    [parameter(Mandatory = $false)][ValidateRange(1, 4)][int] $count = 1,
+    [parameter(Mandatory = $false)][switch] $resolve,
+    [parameter(Mandatory = $false)][switch] $mac,
+    [parameter(Mandatory = $false)][switch] $latency,
+    [parameter(Mandatory = $false)][switch] $grid,
+    [parameter(Mandatory = $false)][switch] $file,
+    [parameter(Mandatory = $false)][string[]] $ports,
+    [parameter(Mandatory = $false)][string[]] $exclude,
+    [parameter(Mandatory = $false)][switch] $color
 )
 
 #Requires -Version 7.0
-$PSStyle.Progress.View = 'Minimal'
-$PSStyle.Progress.MaxWidth = 120
+
+if (($color) -or (($PSVersionTable.PSVersion.Major -lt 7) -and ($PSVersionTable.PSVersion.Minor -lt 2))) {
+    $PSStyle.OutputRendering = 'PlainText'
+}
+else {
+    $PSStyle.OutputRendering = 'Ansi'
+    $PSStyle.Progress.View = 'Minimal'
+    $PSStyle.Progress.MaxWidth = 120
+    $PSStyle.Formatting.TableHeader = $PSStyle.Foreground.BrightBlack + $PSStyle.Italic
+} 
+
 
 if ($net -notmatch '^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$)){3}$') {
+    $PSStyle.Formatting.Error = $PSStyle.Background.BrightRed + $PSStyle.Foreground.BrightWhite
     Write-Error "Not valid IP address! Syntax: 192.168.0"
     exit;
 }
@@ -81,32 +68,25 @@ if ($ports -ne 0) {
 }
 
 $exclude_list = @()
-foreach ($e in $exclude) {
-    #$e = $e -replace (' ', '')
-    if (($e -match '^(25[0-5]|(2[0-4]|1\d|[1-9]|)\d)$') -or ($e -match '^(25[0-5]|(2[0-4]|1\d|[1-9]|)\d)-(25[0-5]|(2[0-4]|1\d|[1-9]|)\d)$')) {
-        if ($e -like "*-*") {
-            $splitter = $e.split("-")
-            $splitter_array = $splitter[0]..$splitter[1]
-            $exclude_list += $splitter_array 
-        }
+if ($exclude) {
+    foreach ($e in $exclude) {
+        #$e = $e -replace (' ', '')
+        if (($e -match '^(25[0-5]|(2[0-4]|1\d|[1-9]|)\d)$') -or ($e -match '^(25[0-5]|(2[0-4]|1\d|[1-9]|)\d)-(25[0-5]|(2[0-4]|1\d|[1-9]|)\d)$')) {
+            if ($e -like "*-*") {
+                $splitter = $e.split("-")
+                $splitter_array = $splitter[0]..$splitter[1]
+                $exclude_list += $splitter_array 
+            }
+            else {
+                $exclude_list += $e    
+            }
+        } 
         else {
-            $exclude_list += $e    
+            Write-Error "Not valid ip in -exclude! Only [0..255]. Syntax: 1,23,248-254"
+            exit;    
         }
-    } 
-    else {
-        Write-Error "Not valid ip in -exclude! Only [0..255]. Syntax: 1,23,248-254"
-        exit;    
     }
-}
-$exclude_list = $exclude_list | Select-Object -Unique
-
-function ColorValue {
-    param (     
-        [Parameter(Mandatory = $False)][string]$Column_Name,
-        [Parameter(Mandatory = $False)][string]$color
-    )
-    $e = [char]27
-    "$e[${color}m$($Column_Name)${e}[0m"
+    $exclude_list = $exclude_list | Select-Object -Unique
 }
 
 $live_ips = @()
@@ -169,19 +149,14 @@ $ping_time = Measure-Command {
     
     $live_ips = $($pingout.'IP address').count
     
-    $prop_ip = @{name = 'IP address'; Expression = { ColorValue $_.'IP address' 92 } } 
-    $prop_name = @{name = 'Name'; Expression = { ColorValue $_.Name 93 } }
-    $prop_mac = @{name = 'MAC address'; Expression = { ColorValue $_.'MAC address' 97 } }
-    $prop_latency = @{name = 'Latency (ms)'; Expression = { if ($_.'Latency (ms)' -gt 100) { ColorValue $_.'Latency (ms)' 91 } else { ColorValue $_.'Latency (ms)' 93 } }; align = 'center' }
-    $prop_ports = @{name = 'Open Ports'; Expression = { ColorValue $_.'Open ports' 92 }; align = 'center' }
-
-    <# $prop_ip = @{name = 'IP address'; Expression = { $($PSStyle.Foreground.BrightGreen) + $_.'IP address' } }
+    $prop_ip = @{name = 'IP address'; Expression = { $($PSStyle.Foreground.BrightGreen) + $_.'IP address' } }
     $prop_name = @{name = 'Name'; Expression = { $($PSStyle.Foreground.BrightYellow) + $_.Name } }
-    $prop_mac = @{name = 'MAC address'; Expression = { ColorValue $_.'MAC address' 97 } }
-    $prop_latency = @{name = 'Latency (ms)'; Expression = { if ($_.'Latency (ms)' -gt 100) { ColorValue $_.'Latency (ms)' 91 } else { ColorValue $_.'Latency (ms)' 93 } }; align = 'center' }
-    $prop_ports = @{name = 'Open Ports'; Expression = { ColorValue $_.'Open ports' 92 }; align = 'center' }
- #>
-    [collections.arraylist]$Properties = @()
+    $prop_mac = @{name = 'MAC address'; Expression = { $($PSStyle.Foreground.BrightWhite) + $_.'MAC address' } }
+    $prop_latency = @{name = 'Latency (ms)'; Expression = { if ($_.'Latency (ms)' -gt 100) { $($PSStyle.Foreground.BrightRed) + $_.'Latency (ms)' } else { $($PSStyle.Foreground.BrightYellow) + $_.'Latency (ms)' } }; align = 'center' }
+    $prop_ports = @{name = 'Open Ports'; Expression = { $($PSStyle.Foreground.BrightGreen) + $_.'Open ports' }; align = 'center' }
+ 
+    <# [collections.arraylist]$Properties = @() #>
+    $Properties = @()
     $Properties += $prop_ip
     if (!$resolve) {
         $Properties += $prop_name
@@ -192,10 +167,9 @@ $ping_time = Measure-Command {
     if (!$latency) {
         $Properties += $prop_latency
     }
-    if ($ports -ne 0) {
+    if ($ports) {
         $Properties += $prop_ports
     }
-    $PSStyle.Formatting.TableHeader = $PSStyle.Foreground.BrightWhite + $PSStyle.Bold
     $pingout = $pingout | Sort-Object { $_.'IP Address' -as [Version] } 
     $pingout | Format-Table  -Property $Properties | Out-Default
 }
