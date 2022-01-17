@@ -23,10 +23,25 @@ param (
     [parameter(Mandatory = $false)][switch] $file,
     [parameter(Mandatory = $false)][string[]] $ports,
     [parameter(Mandatory = $false)][string[]] $exclude,
-    [parameter(Mandatory = $false)][switch] $color
+    [parameter(Mandatory = $false)][switch] $color,
+    [parameter(Mandatory = $false)][switch] $help
 )
 
 #Requires -Version 7.0
+
+<# if ($help) {
+@"
+    
+#123
+
+qweqw
+
+qweeqw
+
+"@ | Show-Markdown
+
+    exit
+} #>
 
 if (($color) -or (($PSVersionTable.PSVersion.Major -lt 7) -and ($PSVersionTable.PSVersion.Minor -lt 2))) {
     $PSStyle.OutputRendering = 'PlainText'
@@ -149,7 +164,7 @@ $ping_time = Measure-Command {
     
     $live_ips = $($pingout.'IP address').count
    
-    $prop_number = @{name = 'Number'; Expression = { '{0}' -f $_ } }
+    #$prop_number = @{name = 'Number'; Expression = { '{0}' -f $_ } }
     $prop_ip = @{name = 'IP address'; Expression = { $($PSStyle.Foreground.BrightGreen) + $_.'IP address' } }
     $prop_name = @{name = 'Name'; Expression = { $($PSStyle.Foreground.BrightYellow) + $_.Name } }
     $prop_mac = @{name = 'MAC address'; Expression = { $($PSStyle.Foreground.BrightWhite) + $_.'MAC address' } }
@@ -158,7 +173,7 @@ $ping_time = Measure-Command {
  
     <# [collections.arraylist]$Properties = @() #>
     $Properties = @()
-    $Properties += $prop_number
+    #$Properties += $prop_number
     $Properties += $prop_ip
     if (!$resolve) {
         $Properties += $prop_name
