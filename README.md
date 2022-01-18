@@ -17,11 +17,11 @@
 - [xterm](https://en.wikipedia.org/wiki/Xterm)-based terminal
 ### Pingonator command syntax
 
->**.\pingonator.ps1** [**-net** *network*] [**-begin** *count*] [**-end** *count*] [**-count** *count*] [**-resolve**] [**-mac**] [**-latency**] [**-grid**] [**-file**] [**-ports** *ports*] [**-exclude** *ips*] [**-color**] 
+>**.\pingonator.ps1** **-net** *network* [**-begin** *count*] [**-end** *count*] [**-count** *count*] [**-resolve**] [**-mac**] [**-latency**] [**-grid**] [**-file**] [**-ports** *ports*] [**-exclude** *ips*] [**-color**] 
 
 |Options|Explanation|Default value|
 |---|---|:---:|
-|**-net** *network*|Network to scan|192.168.0|
+|**-net** *network*|Network to scan (required). Like 192.168.0||
 |**-begin** *count*|First number to scan [1..254]|1|
 |**-end** *count*|Last number to scan [1..254]|254|
 |**-count** *count*|Number of echo request to send [1..4]|1|

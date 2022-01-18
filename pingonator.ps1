@@ -1,19 +1,26 @@
 <#
-.DESCRIPTION
-    Parallel network check
+.SYNOPSIS 
+Parallel network check
+
+.PARAMETER net
+Network to scan
+
+    .PARAMETER begin
+dzsfadsgfasgf
+
 .EXAMPLE
-    Ping network 192.168.0.0 in range 192.168.0.1-192.168.0.254
-    .\pingonator.ps1 -net 192.168.0 -start 1 -end 254 -count 1 -resolve 1 -mac 1 -latency 1 -grid 1 -ports 20-23,25,80 -exclude 3,4,9-12 -color
-    or
-    .\pingonator.ps1 -net 192.168.0
+Ping network 192.168.0.0 in range 192.168.0.1-192.168.0.254
+PS> .\pingonator.ps1 -net 192.168.0 -start 1 -end 254 -count 1 -resolve 1 -mac 1 -latency 1 -grid 1 -ports 20-23,25,80 -exclude 3,4,9-12 -color
+or
+PS> .\pingonator.ps1 -net 192.168.0
 .NOTES
-    Author: Rad
-    Date: December 9, 2021
-    URL: https://github.com/killadog/Pingonator
+Author: Rad
+Date: December 9, 2021
+URL: https://github.com/killadog/Pingonator 
 #>
 param (
-    [parameter(Mandatory = $false)][string]$net = "192.168.0",
-    [parameter(Mandatory = $false)][ValidateRange(1, 254)][int] $begin = 1,
+    [parameter(Mandatory = $false)][string]$net ## my 1st cool param
+    , [parameter(Mandatory = $false)][ValidateRange(1, 254)][int] $begin = 1,
     [parameter(Mandatory = $false)][ValidateRange(1, 254)][int] $end = 254,
     [parameter(Mandatory = $false)][ValidateRange(1, 4)][int] $count = 1,
     [parameter(Mandatory = $false)][switch] $resolve,
@@ -24,24 +31,18 @@ param (
     [parameter(Mandatory = $false)][string[]] $ports,
     [parameter(Mandatory = $false)][string[]] $exclude,
     [parameter(Mandatory = $false)][switch] $color,
-    [parameter(Mandatory = $false)][switch] $help
+    [parameter(Mandatory = $false)][switch] $help ## my 2st cool param
 )
 
 #Requires -Version 7.0
 
-<# if ($help) {
-@"
-    
-#123
-
-qweqw
-
-qweeqw
-
-"@ | Show-Markdown
-
+if ($help -or !$net) {
+    Get-Command -Syntax .\pingonator.ps1
+    $help_parameters = Get-Help .\pingonator.ps1 -Parameter * 
+    $help_parameters | Format-Table -Property @{name = 'IP address'; Expression = { $($PSStyle.Foreground.BrightGreen) + "-" + $help_parameters.'name' } },
+    @{name = 'IP address'; Expression = { $($PSStyle.Foreground.BrightGreen) + $help_parameters.'description' } }
     exit
-} #>
+}
 
 if (($color) -or (($PSVersionTable.PSVersion.Major -lt 7) -and ($PSVersionTable.PSVersion.Minor -lt 2))) {
     $PSStyle.OutputRendering = 'PlainText'
