@@ -39,8 +39,8 @@ param (
 if ($help -or !$net) {
     Get-Command -Syntax .\pingonator.ps1
     $help_parameters = Get-Help .\pingonator.ps1 -Parameter * 
-    $help_parameters | Format-Table -Property @{name = 'IP address'; Expression = { $($PSStyle.Foreground.BrightGreen) + "-" + $help_parameters.'name' } },
-    @{name = 'IP address'; Expression = { $($PSStyle.Foreground.BrightGreen) + $help_parameters.'description' } }
+    $help_parameters | Format-Table -Property @{name = 'IP address'; Expression = { $($PSStyle.Foreground.BrightGreen) + "-" + $_.'name' } },
+    @{name = 'IP2 address'; Expression = { $($PSStyle.Foreground.BrightGreen) + $_.'description'.Tostring() } }
     exit
 }
 
