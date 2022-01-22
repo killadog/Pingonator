@@ -32,7 +32,7 @@
 |**-file**|Export to CSV file|False|
 |**-ports**|Detect open ports (comma or dash delimited) [0..65535,0..65535,0..65535-0..65535]||
 |**-exclude**|Exlude hosts from check (comma or dash delimited) [0..255,0..255,0..255-0..255]||
-|**-color**|Color off|False|
+|**-color**|Colors off|False|
 
 ### Examples
 
@@ -42,4 +42,3 @@
 
 `.\pingonator.ps1 -net 10.10.0`
 
-`.\pingonator.ps1`
