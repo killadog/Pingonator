@@ -2,12 +2,6 @@
 .SYNOPSIS 
 Parallel network check
 
-.PARAMETER net
-Network to scan
-
-    .PARAMETER begin
-dzsfadsgfasgf
-
 .EXAMPLE
 Ping network 192.168.0.0 in range 192.168.0.1-192.168.0.254
 PS> .\pingonator.ps1 -net 192.168.0 -start 1 -end 254 -count 1 -resolve 1 -mac 1 -latency 1 -grid 1 -ports 20-23,25,80 -exclude 3,4,9-12 -color
@@ -19,19 +13,19 @@ Date: December 9, 2021
 URL: https://github.com/killadog/Pingonator 
 #>
 param (
-    [parameter(Mandatory = $false)][string]$net ## my 1st cool param
-    , [parameter(Mandatory = $false)][ValidateRange(1, 254)][int] $begin = 1,
-    [parameter(Mandatory = $false)][ValidateRange(1, 254)][int] $end = 254,
-    [parameter(Mandatory = $false)][ValidateRange(1, 4)][int] $count = 1,
-    [parameter(Mandatory = $false)][switch] $resolve,
-    [parameter(Mandatory = $false)][switch] $mac,
-    [parameter(Mandatory = $false)][switch] $latency,
-    [parameter(Mandatory = $false)][switch] $grid,
-    [parameter(Mandatory = $false)][switch] $file,
-    [parameter(Mandatory = $false)][string[]] $ports,
-    [parameter(Mandatory = $false)][string[]] $exclude,
-    [parameter(Mandatory = $false)][switch] $color,
-    [parameter(Mandatory = $false)][switch] $help ## my 2st cool param
+    [parameter(Mandatory = $false)][string]$net ## Network to scan (required). Like 192.168.0
+    , [parameter(Mandatory = $false)][ValidateRange(1, 254)][int] $begin = 1 ## First number to scan [1..254]
+    , [parameter(Mandatory = $false)][ValidateRange(1, 254)][int] $end = 254 ## Last number to scan [1..254]
+    , [parameter(Mandatory = $false)][ValidateRange(1, 4)][int] $count = 1 ## Number of echo request to send [1..4]
+    , [parameter(Mandatory = $false)][switch] $resolve ## Disable resolve of hostname
+    , [parameter(Mandatory = $false)][switch] $mac ## Disable resolve of MAC address
+    , [parameter(Mandatory = $false)][switch] $latency ## Hide latency
+    , [parameter(Mandatory = $false)][switch] $grid ## Output to a grid view
+    , [parameter(Mandatory = $false)][switch] $file ## Export to CSV file
+    , [parameter(Mandatory = $false)][string[]] $ports ## Detect open ports (comma or dash delimited) [0..65535,0..65535,0..65535-0..65535]
+    , [parameter(Mandatory = $false)][string[]] $exclude ## Exlude hosts from check (comma or dash delimited) [0..255,0..255,0..255-0..255]
+    , [parameter(Mandatory = $false)][switch] $color ## Colors off
+    , [parameter(Mandatory = $false)][switch] $help ## This help screen
 )
 
 #Requires -Version 7.0
@@ -39,8 +33,10 @@ param (
 if ($help -or !$net) {
     Get-Command -Syntax .\pingonator.ps1
     $help_parameters = Get-Help .\pingonator.ps1 -Parameter * 
-    $help_parameters | Format-Table -Property @{name = 'IP address'; Expression = { $($PSStyle.Foreground.BrightGreen) + "-" + $_.'name' } },
-    @{name = 'IP2 address'; Expression = { $($PSStyle.Foreground.BrightGreen) + $_.'description'.Tostring() } }
+    $help_parameters | Format-Table -Property @{name = 'Option'; Expression = { $($PSStyle.Foreground.BrightGreen) + "-" + $($_.'name') } },
+    @{name = 'Type'; Expression = { $($PSStyle.Foreground.BrightWhite) + $($_.'parameterValue') } },
+    @{name = 'Default'; Expression = { if ($($_.'defaultValue' -notlike 'String')) { $($PSStyle.Foreground.BrightWhite) + $($_.'defaultValue') } }; align = 'Center' },
+    @{name = 'Explanation'; Expression = { $($PSStyle.Foreground.BrightYellow) + $($_.'description').Text } }
     exit
 }
 
