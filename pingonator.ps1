@@ -1,7 +1,6 @@
 <#
 .SYNOPSIS 
 Parallel network check
-
 .EXAMPLE
 Ping network 192.168.0.0 in range 192.168.0.1-192.168.0.254
 PS> .\pingonator.ps1 -net 192.168.0 -start 1 -end 254 -count 1 -resolve 1 -mac 1 -latency 1 -grid 1 -ports 20-23,25,80 -exclude 3,4,9-12 -color
@@ -30,6 +29,16 @@ param (
 
 #Requires -Version 7.0
 
+if (($color) -or (($PSVersionTable.PSVersion.Major -lt 7) -and ($PSVersionTable.PSVersion.Minor -lt 2))) {
+    $PSStyle.OutputRendering = 'PlainText'
+}
+else {
+    $PSStyle.OutputRendering = 'Ansi'
+    $PSStyle.Progress.View = 'Minimal'
+    $PSStyle.Progress.MaxWidth = 120
+    $PSStyle.Formatting.TableHeader = $PSStyle.Foreground.BrightBlack + $PSStyle.Italic
+}
+
 if ($help -or !$net) {
     Get-Command -Syntax .\pingonator.ps1
     $help_parameters = Get-Help .\pingonator.ps1 -Parameter * 
@@ -39,17 +48,6 @@ if ($help -or !$net) {
     @{name = 'Explanation'; Expression = { $($PSStyle.Foreground.BrightYellow) + $($_.'description').Text } }
     exit
 }
-
-if (($color) -or (($PSVersionTable.PSVersion.Major -lt 7) -and ($PSVersionTable.PSVersion.Minor -lt 2))) {
-    $PSStyle.OutputRendering = 'PlainText'
-}
-else {
-    $PSStyle.OutputRendering = 'Ansi'
-    $PSStyle.Progress.View = 'Minimal'
-    $PSStyle.Progress.MaxWidth = 120
-    $PSStyle.Formatting.TableHeader = $PSStyle.Foreground.BrightBlack + $PSStyle.Italic
-} 
-
 
 #if ($net -notmatch '^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$)){3}$') {
 if ($net -notmatch '^(((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$|[,\s])){3})+') {
@@ -104,6 +102,8 @@ if ($exclude) {
 
 $range = [Math]::Abs($end - $begin) + 1 - $exclude_list.Name.count
 $now = Get-Date -UFormat "%Y/%m/%d-%H:%M:%S"
+$file_name = Get-Date -UFormat "%Y%m%d-%H%M%S"
+$gridout = @()
 
 Write-Host "Starting at $now"
 
@@ -140,7 +140,6 @@ ForEach ($n in $net) {
                     if (!$using:latency) {
                         $ms = $ping.Latency
                     }
-
                     if ($($using:ports_list) -ne 0) { 
                         ForEach ($p in $($using:ports_list)) {
                             $check_port = Test-NetConnection -ComputerName $ip -InformationLevel Quiet -Port $p -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
@@ -192,19 +191,24 @@ ForEach ($n in $net) {
     }
 
     if ($grid) {
-        $pingout | Out-GridView -Title "[$now] $live_ips live IPs from $range [$n.$begin..$n.$end]" 
+        #$gridout += [PSCustomObject]$pingout
+        $gridout += $pingout
+        #$pingout | Out-GridView -Title "[$now] $live_ips live IPs from $range [$n.$begin..$n.$end]" 
     }
 
     if ($file) {
-        $file_name = Get-Date -UFormat "%Y%m%d-%H%M%S"
         $delimeter = (Get-Culture).TextInfo.ListSeparator
-        $pingout | Export-Csv -path .\$file_name.csv -NoTypeInformation -Delimiter $delimeter
+        $pingout | Export-Csv -Append -path .\$file_name.csv -NoTypeInformation -Delimiter $delimeter
         Write-Host "CSV file saved in $($PSStyle.Foreground.Yellow)$PSScriptRoot\$file_name.csv$($PSStyle.Reset)"
     }
 
     Write-Host "Total $($PSStyle.Background.White)$($PSStyle.Foreground.Black) $live_ips $($PSStyle.Reset) live IPs from $range [$n.$begin..$n.$end]"
     $ping_time = $ping_time.ToString().SubString(0, 8)
     Write-Host "Elapsed time $ping_time`n"
+}
+
+if ($grid) {
+    $gridout | Out-GridView 
 }
 <# Write-Host 'Press any key to continue...';
 $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown'); #>
