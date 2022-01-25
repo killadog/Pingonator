@@ -199,7 +199,7 @@ ForEach ($n in $net) {
     if ($file) {
         $delimeter = (Get-Culture).TextInfo.ListSeparator
         $pingout | Export-Csv -Append -path .\$file_name.csv -NoTypeInformation -Delimiter $delimeter
-        Write-Host "CSV file saved in $($PSStyle.Foreground.Yellow)$PSScriptRoot\$file_name.csv$($PSStyle.Reset)"
+        Write-Host "CSV file saved to $($PSStyle.Foreground.Yellow)$PSScriptRoot\$file_name.csv$($PSStyle.Reset)"
     }
 
     Write-Host "Total $($PSStyle.Background.White)$($PSStyle.Foreground.Black) $live_ips $($PSStyle.Reset) live IPs from $range [$n.$begin..$n.$end]"
