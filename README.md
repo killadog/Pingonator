@@ -21,7 +21,7 @@
 
 |Options|Explanation|Default value|
 |---|---|:---:|
-|**-net** *network*|Network to scan (required). Like 192.168.0||
+|**-net** *network*|Network(s) to scan. **Required**. Comma delimited. Like **192.168.0** or **192.168.0,192.168.1**.||
 |**-begin** *count*|First number to scan [1..254]|1|
 |**-end** *count*|Last number to scan [1..254]|254|
 |**-count** *count*|Number of echo request to send [1..4]|1|
