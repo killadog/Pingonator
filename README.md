@@ -33,7 +33,7 @@
 |**-ports**|Detect open ports (comma or dash delimited) [0..65535,0..65535,0..65535-0..65535]||
 |**-exclude**|Exlude hosts from check (comma or dash delimited) [0..255,0..255,0..255-0..255]||
 |**-color**|Colors off|False|
-|**-help**|Help screen|False|
+|**-help**|Help screen. *No options at all to have the same.*|False|
 
 ### Examples
 

@@ -107,6 +107,9 @@ $range = [Math]::Abs($end - $begin) + 1 - $exclude_list.Name.count
 $now = Get-Date -UFormat "%Y/%m/%d-%H:%M:%S"
 
 Write-Host "Starting at $now"
+
+
+    
 Write-Host "Checking $range IPs from $net.$begin to $net.$end"
 
 $ping_time = Measure-Command {
@@ -121,8 +124,8 @@ $ping_time = Measure-Command {
             if ($ping.Status -eq "Success") {
                 if (!$using:resolve) {            
                     try {
-                        $Name = Test-Connection $ip -Count 1 -IPv4 -ResolveDestination | Select-Object -ExpandProperty Destination
-                        <# $Name = Resolve-DnsName -Name $ip -DnsOnly -ErrorAction Stop | Select-Object -ExpandProperty NameHost #>
+                        #$Name = Test-Connection $ip -Count 1 -IPv4 -ResolveDestination | Select-Object -ExpandProperty Destination
+                        $Name = Resolve-DnsName -Name $ip -DnsOnly -ErrorAction Stop | Select-Object -ExpandProperty NameHost
                     }
                     catch {
                         $Name = $null
