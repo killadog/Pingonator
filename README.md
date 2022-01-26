@@ -21,7 +21,7 @@
 
 |Options|Explanation|Default value|
 |---|---|:---:|
-|**-net** *network*|Network(s) to scan. **Required**. Comma delimited. Like **192.168.0** or **192.168.0,192.168.1**.||
+|**-net** *network*|Network(s) to scan. **Required**. Comma or dash delimited. Like **192.168.0** or **192.168.0-6,10.10.0**.||
 |**-begin** *count*|First number to scan [1..254]|1|
 |**-end** *count*|Last number to scan [1..254]|254|
 |**-count** *count*|Number of echo request to send [1..4]|1|
@@ -33,6 +33,7 @@
 |**-ports**|Detect open ports (comma or dash delimited) [0..65535,0..65535,0..65535-0..65535]||
 |**-exclude**|Exlude hosts from check (comma or dash delimited) [0..255,0..255,0..255-0..255]||
 |**-color**|Colors off|False|
+|**-progress**|Progress bar off|False|
 |**-help**|Help screen. *No options at all to have the same.*|False|
 
 ### Examples
