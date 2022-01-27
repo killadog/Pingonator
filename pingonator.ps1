@@ -3,7 +3,7 @@
 Parallel network check
 .EXAMPLE
 Ping network 192.168.0.0 in range 192.168.0.1-192.168.0.254
-PS> .\pingonator.ps1 -net 192.168.0 -start 1 -end 254 -count 1 -resolve 1 -mac 1 -latency 1 -grid 1 -ports 20-23,25,80 -exclude 3,4,9-12 -color
+PS> .\pingonator.ps1 -net 192.168.0 -begin 1 -end 254 -count 1 -resolve -mac -latency -grid -ports 20-23,25,80 -exclude 3,4,9-12 -color -progress -help
 or
 PS> .\pingonator.ps1 -net 192.168.0
 .NOTES
@@ -12,7 +12,7 @@ Date: December 9, 2021
 URL: https://github.com/killadog/Pingonator 
 #>
 param (
-    [parameter(Mandatory = $false)][string[]] $net ## Network(s) to scan. Required. Comma or dash delimited. Like 192.168.0 or 192.168.0-6,10.10.0.
+    [parameter(Mandatory = $false)][string[]] $net ## Network(s) to scan. Required. Comma or dash delimited. Like 192.168.0 or 192.168.0-6,10.10.0
     , [parameter(Mandatory = $false)][ValidateRange(1, 254)][int] $begin = 1 ## First number to scan [1..254]
     , [parameter(Mandatory = $false)][ValidateRange(1, 254)][int] $end = 254 ## Last number to scan [1..254]
     , [parameter(Mandatory = $false)][ValidateRange(1, 4)][int] $count = 1 ## Number of echo request to send [1..4]
@@ -30,7 +30,7 @@ param (
 
 #Requires -Version 7.0
 
-if (($color) -or (($PSVersionTable.PSVersion.Major -lt 7) -and ($PSVersionTable.PSVersion.Minor -lt 2))) {
+if (($color) -or (($PSVersionTable.PSVersion.Major -eq 7) -and ($PSVersionTable.PSVersion.Minor -lt 2))) {
     $PSStyle.OutputRendering = 'PlainText'
 }
 else {
@@ -42,19 +42,18 @@ else {
 
 if ($help -or !$net) {
     Get-Command -Syntax .\pingonator.ps1
-    $help_parameters = Get-Help .\pingonator.ps1 -Parameter * 
-    $help_parameters | Format-Table -Property @{name = 'Option'; Expression = { $($PSStyle.Foreground.BrightGreen) + "-" + $($_.'name') } },
+    Get-Help .\pingonator.ps1 -Parameter * | Format-Table -Property @{name = 'Option'; Expression = { $($PSStyle.Foreground.BrightGreen) + "-" + $($_.'name') } },
     @{name = 'Type'; Expression = { $($PSStyle.Foreground.BrightWhite) + $($_.'parameterValue') } },
     @{name = 'Default'; Expression = { if ($($_.'defaultValue' -notlike 'String')) { $($PSStyle.Foreground.BrightWhite) + $($_.'defaultValue') } }; align = 'Center' },
     @{name = 'Explanation'; Expression = { $($PSStyle.Foreground.BrightYellow) + $($_.'description').Text } }
     exit
 }
 
-<# if ($net -notmatch '^(((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$|[,\s])){3})+') {
+if ($net -notmatch '^(((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$|[,]|(-(25[0-5]|(2[0-4]|1\d|[1-9]|)\d),*))){3})+$') {
     $PSStyle.Formatting.Error = $PSStyle.Background.BrightRed + $PSStyle.Foreground.BrightWhite
-    Write-Error "Not valid IP address! Syntax: 192.168.0 or 192.168.0,192.168.12"
+    Write-Error "Not valid IP address! Syntax: 192.168.0 or 192.168.0,10.10.12-16"
     exit;
-} #>
+}
 
 $net_from_range = @()
 foreach ($n in $net) {
@@ -70,12 +69,10 @@ foreach ($n in $net) {
         $net_from_range += $n
     }
 }
-$net_from_range = $net_from_range | Select-Object -Unique
-$net = $net_from_range
+$net = $net_from_range | Select-Object -Unique
 
 $ports_list = @()
 if ($ports -ne 0) {
-    #$ports = $ports -replace (' ', '')
     foreach ($p in $ports) {
         if ($p -match '(^([1-9]|[1-5]?[0-9]{2,4}|6[1-4][0-9]{3}|65[1-4][0-9]{2}|655[1-2][0-9]|6553[1-5])$)|(^([1-9]|[1-5]?[0-9]{2,4}|6[1-4][0-9]{3}|65[1-4][0-9]{2}|655[1-2][0-9]|6553[1-5])-([1-9]|[1-5]?[0-9]{2,4}|6[1-4][0-9]{3}|65[1-4][0-9]{2}|655[1-2][0-9]|6553[1-5])$)|((?<=,|^)([1-9]|[1-5]?[0-9]{2,4}|6[1-4][0-9]{3}|65[1-4][0-9]{2}|655[1-2][0-9]|6553[1-5])(?=,|$),?)|((?<=,|^)([1-9]|[1-5]?[0-9]{2,4}|6[1-4][0-9]{3}|65[1-4][0-9]{2}|655[1-2][0-9]|6553[1-5])-([1-9]|[1-5]?[0-9]{2,4}|6[1-4][0-9]{3}|65[1-4][0-9]{2}|655[1-2][0-9]|6553[1-5])(?=,|$),?)') {
             if ($p -like "*-*") {
@@ -98,7 +95,6 @@ if ($ports -ne 0) {
 $exclude_list = @()
 if ($exclude) {
     foreach ($e in $exclude) {
-        #$e = $e -replace (' ', '')
         if (($e -match '^(25[0-5]|(2[0-4]|1\d|[1-9]|)\d)$') -or ($e -match '^(25[0-5]|(2[0-4]|1\d|[1-9]|)\d)-(25[0-5]|(2[0-4]|1\d|[1-9]|)\d)$')) {
             if ($e -like "*-*") {
                 $splitter = $e.split("-")
@@ -163,6 +159,7 @@ $all_time = Measure-Command {
                         if ($($using:ports_list) -ne 0) { 
                             ForEach ($p in $($using:ports_list)) {
                                 $check_port = Test-NetConnection -ComputerName $ip -InformationLevel Quiet -Port $p -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+                                Write-Progress -Completed -Activity "make progress bar dissapear"
                                 if ($check_port) {
                                     $open_ports += "$p "
                                 }
@@ -211,9 +208,7 @@ $all_time = Measure-Command {
         }
 
         if ($grid) {
-            #$gridout += [PSCustomObject]$pingout
             $gridout += $pingout
-            #$pingout | Out-GridView -Title "[$now] $live_ips live IPs from $range [$n.$begin..$n.$end]" 
         }
 
         if ($file) {
@@ -230,8 +225,6 @@ $all_time = $all_time.ToString().SubString(0, 8)
 Write-Host "All time: $all_time`n"
 
 if ($grid) {
-    $net
-    #$gridout | Out-GridView -Title "[$now] $net $live_ips live IPs from $range [$n.$begin..$n.$end]"
     $gridout | Out-GridView -Title "[$now] live IPs from $net"
 }
 
