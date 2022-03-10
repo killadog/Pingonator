@@ -6,7 +6,7 @@
 
 *fast and furious*
 
-![2022-01-14 213024](https://user-images.githubusercontent.com/47281323/149566817-fff15bd9-02ed-487e-b66b-02682a1f5150.png)
+![2022-01-14 213024](https://user-images.githubusercontent.com/47281323/157673144-bc1f9cfb-72a0-4ff6-a5b8-379ae60e6624.png)
 
 
 ### System requirements
