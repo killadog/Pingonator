@@ -6,7 +6,7 @@
 
 *fast and furious*
 
-![2022-01-14 213024](https://user-images.githubusercontent.com/47281323/149566817-fff15bd9-02ed-487e-b66b-02682a1f5150.png)
+![2022-01-14 213024](https://user-images.githubusercontent.com/47281323/157673144-bc1f9cfb-72a0-4ff6-a5b8-379ae60e6624.png)
 
 
 ### System requirements
@@ -17,7 +17,7 @@
 - [xterm](https://en.wikipedia.org/wiki/Xterm)-based terminal
 ### Pingonator command syntax
 
->**.\pingonator.ps1** **-net** *network* [**-begin** *count*] [**-end** *count*] [**-count** *count*] [**-resolve**] [**-mac**] [**-latency**] [**-grid**] [**-file**] [**-ports** *ports*] [**-exclude** *ips*] [**-color**] [**-progress**] [**-help**]
+>**.\pingonator.ps1** **-net** *network* [**-begin** *count*] [**-end** *count*] [**-exclude** *ips*] [**-count** *count*] [**-resolve**] [**-mac**] [**-vendor**] [**-latency**] [**-grid**] [**-file**] [**-ports** *ports*] [**-color**] [**-progress**] [**-help**]
 
 |Options|Explanation|Default value|
 |---|---|:---:|
@@ -28,6 +28,7 @@
 |**-count** *count*|Number of echo request to send [1..4]|1|
 |**-resolve**|Disable resolve of hostname|False|
 |**-mac**|Disable resolve of MAC address |False|
+|**-vendor**|Disable resolve of MAC address |False|
 |**-latency**|Hide latency|False|
 |**-grid**|Output to a grid view|False|
 |**-file**|Export to CSV file|False|
