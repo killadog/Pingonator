@@ -28,7 +28,7 @@
 |**-count** *count*|Number of echo request to send [1..4]|1|
 |**-resolve**|Disable resolve of hostname|False|
 |**-mac**|Disable resolve of MAC address |False|
-|**-vendor**|Disable resolve of MAC address |False|
+|**-vendor**|Disable resolve of vendor |False|
 |**-latency**|Hide latency|False|
 |**-grid**|Output to a grid view|False|
 |**-file**|Export to CSV file|False|
