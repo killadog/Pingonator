@@ -15,14 +15,15 @@ param (
     [parameter(Mandatory = $false)][string[]] $net ## Network(s) to scan. Required. Comma or dash delimited. Like 192.168.0 or 192.168.0-6,10.10.0
     , [parameter(Mandatory = $false)][ValidateRange(1, 254)][int] $begin = 1 ## First number to scan [1..254]
     , [parameter(Mandatory = $false)][ValidateRange(1, 254)][int] $end = 254 ## Last number to scan [1..254]
+    , [parameter(Mandatory = $false)][string[]] $exclude ## Exlude hosts from check (comma or dash delimited) [0..255,0..255,0..255-0..255]
     , [parameter(Mandatory = $false)][ValidateRange(1, 4)][int] $count = 1 ## Number of echo request to send [1..4]
     , [parameter(Mandatory = $false)][switch] $resolve ## Disable resolve of hostname
     , [parameter(Mandatory = $false)][switch] $mac ## Disable resolve of MAC address
+    , [parameter(Mandatory = $false)][switch] $vendor ## Disable resolve vendor
     , [parameter(Mandatory = $false)][switch] $latency ## Hide latency
     , [parameter(Mandatory = $false)][switch] $grid ## Output to a grid view
     , [parameter(Mandatory = $false)][switch] $file ## Export to CSV file
     , [parameter(Mandatory = $false)][string[]] $ports ## Detect open ports (comma or dash delimited) [0..65535,0..65535,0..65535-0..65535]
-    , [parameter(Mandatory = $false)][string[]] $exclude ## Exlude hosts from check (comma or dash delimited) [0..255,0..255,0..255-0..255]
     , [parameter(Mandatory = $false)][switch] $color ## Colors off
     , [parameter(Mandatory = $false)][switch] $progress ## Progress bar off
     , [parameter(Mandatory = $false)][switch] $help ## This help screen
@@ -41,12 +42,16 @@ else {
 }
 
 if ($help -or !$net) {
-    Get-Command -Syntax .\pingonator.ps1
-    Get-Help .\pingonator.ps1 -Parameter * | Format-Table -Property @{name = 'Option'; Expression = { $($PSStyle.Foreground.BrightGreen) + "-" + $($_.'name') } },
+    Get-Command -Syntax $PSCommandPath
+    Get-Help $PSCommandPath -Parameter * | Format-Table -Property @{name = 'Option'; Expression = { $($PSStyle.Foreground.BrightGreen) + "-" + $($_.'name') } },
     @{name = 'Type'; Expression = { $($PSStyle.Foreground.BrightWhite) + $($_.'parameterValue') } },
     @{name = 'Default'; Expression = { if ($($_.'defaultValue' -notlike 'String')) { $($PSStyle.Foreground.BrightWhite) + $($_.'defaultValue') } }; align = 'Center' },
     @{name = 'Explanation'; Expression = { $($PSStyle.Foreground.BrightYellow) + $($_.'description').Text } }
     exit
+}
+
+if (!$vendor) {
+    $oui = Get-Content -raw $PSScriptRoot\oui.txt | ConvertFrom-StringData
 }
 
 if ($net -notmatch '^(((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$|[,]|(-(25[0-5]|(2[0-4]|1\d|[1-9]|)\d),*))){3})+$') {
@@ -140,8 +145,8 @@ $all_time = Measure-Command {
                     if ($ping.Status -eq "Success") {
                         if (!$using:resolve) {            
                             try {
-                                #$Name = Test-Connection $ip -Count 1 -IPv4 -ResolveDestination | Select-Object -ExpandProperty Destination
-                                $Name = Resolve-DnsName -Name $ip -DnsOnly -ErrorAction Stop | Select-Object -ExpandProperty NameHost
+                                $Name = Test-Connection $ip -Count 1 -IPv4 -ResolveDestination | Select-Object -ExpandProperty Destination
+                                #$Name = Resolve-DnsName -Name $ip -DnsOnly -ErrorAction Stop | Select-Object -ExpandProperty NameHost
                             }
                             catch {
                                 $Name = $null
@@ -151,6 +156,9 @@ $all_time = Measure-Command {
                             $MAC = (arp -a $ip | Select-String '([0-9a-f]{2}-){5}[0-9a-f]{2}').Matches.Value
                             if ($MAC) {
                                 $MAC = $MAC.ToUpper()
+                                if (!$using:vendor) {
+                                    $vendor = $($using:oui)[$MAC.replace(':', '').replace('-', '')[0..5] -join '']
+                                }
                             }
                         }
                         if (!$using:latency) {
@@ -170,6 +178,7 @@ $all_time = Measure-Command {
                             'IP address'   = $ip
                             'Name'         = $Name
                             'MAC address'  = $MAC
+                            'Vendor'       = $vendor
                             'Latency (ms)' = $ms
                             'Open ports'   = $open_ports
                         }
@@ -184,6 +193,7 @@ $all_time = Measure-Command {
             $prop_ip = @{name = 'IP address'; Expression = { $($PSStyle.Foreground.BrightGreen) + $_.'IP address' } }
             $prop_name = @{name = 'Name'; Expression = { $($PSStyle.Foreground.BrightYellow) + $_.Name } }
             $prop_mac = @{name = 'MAC address'; Expression = { $($PSStyle.Foreground.BrightWhite) + $_.'MAC address' } }
+            $prop_vendor = @{name = 'Vendor'; Expression = { $($PSStyle.Foreground.BrightGreen) + $_.'Vendor' } }
             $prop_latency = @{name = 'Latency (ms)'; Expression = { if ($_.'Latency (ms)' -gt 100) { $($PSStyle.Foreground.BrightRed) + $_.'Latency (ms)' } else { $($PSStyle.Foreground.BrightYellow) + $_.'Latency (ms)' } }; align = 'center' }
             $prop_ports = @{name = 'Open Ports'; Expression = { $($PSStyle.Foreground.BrightGreen) + $_.'Open ports' }; align = 'center' }
  
@@ -196,6 +206,9 @@ $all_time = Measure-Command {
             }
             if (!$mac) {
                 $Properties += $prop_mac
+            }
+            if (!$vendor) {
+                $Properties += $prop_vendor
             }
             if (!$latency) {
                 $Properties += $prop_latency
